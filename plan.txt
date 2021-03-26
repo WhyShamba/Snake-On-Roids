@@ -3,13 +3,13 @@
     [] Instructions
     [] Controller type (asdw, arrows or Touch or via mouse)
     [] Play button
-[] Create border
-[] Create snake using linked list and snake cells + style
+[X] Create border
+[X] Create snake using linked list and snake cells + style
 [] Create and design/style all food cells (different types)
     [] Steroid cell
     [] Creatine cell
     [] Meat cell
-[] Add movement to snake
+[X] Add movement to snake
 [] Add bounds and game over
 [] Create game over modal
 [] Add score
