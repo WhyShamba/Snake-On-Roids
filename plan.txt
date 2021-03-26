@@ -1,0 +1,24 @@
+[] Create initial menu
+    [] Border selection (8x8, 10x10, 12x12)
+    [] Instructions
+    [] Controller type (asdw, arrows or Touch or via mouse)
+    [] Play button
+[] Create border
+[] Create snake using linked list and snake cells + style
+[] Create and design/style all food cells (different types)
+    [] Steroid cell
+    [] Creatine cell
+    [] Meat cell
+[] Add movement to snake
+[] Add bounds and game over
+[] Create game over modal
+[] Add score
+[] Add food effects to snake (diff type)
+    [] Steroid cell - hair falls and snake grows twice + scores goes twice and snake moves 1.75 faster, however if another steroid is not consumed in the next 30s the snake goes back -3, minimum is 1 cell, 
+    [] Creatine cell - snake grows for 1 + arms grow + speed goes up to 1.25. Since snake is hyped that it consumed creatine it goes reverse, so reverse linked list. Side effect: if 5 creatines consumed in the last 50 seconds -> hair falls
+    [] Meat cell and Protein powder - snake grows for 1 + arms grow tiny bit
+    [] Implement timeout for each food
+[] Future
+    [] Implement some kind of max score 
+    [] Add leaderboard, probably using firebase
+    [] Make it multiplayer
