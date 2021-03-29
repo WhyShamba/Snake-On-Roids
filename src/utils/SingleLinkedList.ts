@@ -1,5 +1,5 @@
 export class Node<DataType = any> {
-  next: Node | null;
+  next: Node<DataType> | null;
   data?: DataType;
 
   constructor(data: DataType, nextNode: Node | null = null) {
@@ -17,6 +17,7 @@ export class SingleLinkedList<DataType = any> {
     this.tail = node;
   }
 
+  // O(1)
   add = (node: Node<DataType>) => {
     if (this.head) {
       console.log('Node: ', node);
@@ -28,6 +29,37 @@ export class SingleLinkedList<DataType = any> {
     }
   };
 
+  // Finds the wanted node by certain condition and return previous, next and current node
+  // O(n)
+  find = (condition: (node: Node<DataType>) => boolean) => {
+    let currentNode = this.tail;
+    let previousNode = null;
+
+    if (this.tail?.next) {
+      while (currentNode !== null) {
+        if (condition(currentNode)) {
+          return {
+            currentNode,
+            nextNode: currentNode.next,
+            previousNode,
+          };
+        }
+
+        previousNode = currentNode;
+        currentNode = currentNode.next;
+      }
+
+      // return false;
+    } else {
+      return {
+        currentNode: this.tail!,
+        nextNode: this.tail!,
+        previousNode: this.tail!,
+      };
+    }
+  };
+
+  // O(n)
   reverse = () => {
     let current = this.tail;
     let previous = null;
@@ -48,6 +80,7 @@ export class SingleLinkedList<DataType = any> {
   };
 
   //   Special method, not common for ;inkedList
+  // O(1)
   moveList = (newHead: Node) => {
     //   Update head
     this.head!.next = newHead;
@@ -60,6 +93,7 @@ export class SingleLinkedList<DataType = any> {
     }
   };
 
+  // O(n)
   print = () => {
     let current = this.tail;
     let str = '';

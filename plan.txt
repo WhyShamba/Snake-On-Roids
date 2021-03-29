@@ -5,16 +5,17 @@
     [] Play button
 [X] Create border
 [X] Create snake using linked list and snake cells + style
-[] Create and design/style all food cells (different types)
-    [] Steroid cell
-    [] Creatine cell
-    [] Meat cell
+[x] Create and design/style all food cells (different types)
+    [x] Steroid cell
+    [x] Creatine cell
+    [x] Meat cell
     [x] Basic functionality
 [X] Add movement to snake
 [x] Add bounds and game over
 [x] Create game over modal
 [x] Add score
-[] Fix opposite key bug
+[x] Fix opposite key bug
+[] Add timer for food expiration
 [] Add food effects to snake (diff type)
     [] Steroid cell - hair falls and snake grows twice + scores goes twice and snake moves 1.75 faster, however if another steroid is not consumed in the next 30s the snake goes back -3, minimum is 1 cell, 
     [] Creatine cell - snake grows for 1 + arms grow + speed goes up to 1.25. Since snake is hyped that it consumed creatine it goes reverse, so reverse linked list. Side effect: if 5 creatines consumed in the last 50 seconds -> hair falls

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import { Box, Center, Flex, Heading, Text } from '@chakra-ui/layout';
 import { Node, SingleLinkedList } from './utils/SingleLinkedList';
@@ -9,9 +8,23 @@ import { useSetInterval } from './custom-hooks/useSetInterval';
 import { Button } from '@chakra-ui/button';
 import { useDisclosure } from '@chakra-ui/react';
 import { GameOverModal } from './components/GameOverModal';
+import {
+  getFoodCell,
+  getFoodType,
+  getInitialSnakeCell,
+} from './utils/snake/initializers';
+import {
+  changeDirection,
+  getNextNodeForDirection,
+  getOppositeDirection,
+} from './utils/snake/snake-coordination';
+import { HeadCell } from './components/Cells/HeadCell';
+import { StandardCell } from './components/Cells/StandardCell';
+import { FoodCell } from './components/Cells/FoodCell';
+import { TailCell } from './components/Cells/TailCell';
 
-type FoodType = 'protein' | 'meat' | 'steroid' | 'creatine';
-type CellData = {
+export type FoodType = 'protein' | 'meat' | 'steroid' | 'creatine';
+export type CellData = {
   row: number;
   cell: number;
   value: number;
@@ -51,19 +64,6 @@ const SNAKE_SPEED = 250;
 const SNAKE_SPEED_ON_ROIDS = SNAKE_SPEED * 1.75;
 const SNAKE_SPEED_ON_CREATINE = SNAKE_SPEED * 1.5;
 
-// Now into consideration we have that the rows and column will have same number of rows/columns
-const getInitialSnakeCell = (board: number[][]): CellData => {
-  const row = Math.floor(board.length / 2) - 1;
-  const cell = Math.floor(board[row].length / 2) - 1;
-
-  return {
-    row,
-    cell,
-    value: board[row][cell],
-    direction: generateRandomNum(0, 3),
-  };
-};
-
 function App() {
   const [board, setBoard] = useState(createBoard());
   const snakeRef = useRef(
@@ -75,6 +75,10 @@ function App() {
   const [direction, setDirection] = useState<DIRECTION>(
     snakeRef.current.head!.data!.direction
   );
+  const directionRef = useRef<DIRECTION>(
+    snakeRef.current.head!.data!.direction
+  );
+  const snakeCellsSizeRef = useRef<number>(1);
   const [score, setScore] = useState(0);
   const [foodCell, setFoodCell] = useState({
     value: getFoodCell(board),
@@ -91,15 +95,45 @@ function App() {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      // TODO: dont allow opposite key to be clicked
+      console.log('DIRECTION', directionRef.current);
+      // TODO: SEPERATE THIS LOGIC AND ADD IT TO THE CONTROLLER ITSELF. I recommend adding custom hook
       const key = e.key.toLocaleLowerCase();
       if (key === 'a' || key === 'arrowleft') {
+        // Handles the case where if snake length is 2, and snake is moving to left, and user decides/misclicks to go opposite -> right, then the game will end and that should not happen
+        if (
+          directionRef.current === getOppositeDirection(DIRECTION.LEFT) &&
+          snakeCellsSizeRef.current > 1
+        )
+          return;
+
+        directionRef.current = DIRECTION.LEFT;
         setDirection(DIRECTION.LEFT);
       } else if (key === 'w' || key === 'arrowup') {
+        if (
+          directionRef.current === getOppositeDirection(DIRECTION.UP) &&
+          snakeCellsSizeRef.current > 1
+        )
+          return;
+
+        directionRef.current = DIRECTION.UP;
         setDirection(DIRECTION.UP);
       } else if (key === 's' || key === 'arrowdown') {
+        if (
+          directionRef.current === getOppositeDirection(DIRECTION.DOWN) &&
+          snakeCellsSizeRef.current > 1
+        )
+          return;
+
+        directionRef.current = DIRECTION.DOWN;
         setDirection(DIRECTION.DOWN);
       } else if (key === 'd' || key === 'arrowright') {
+        if (
+          directionRef.current === getOppositeDirection(DIRECTION.RIGHT) &&
+          snakeCellsSizeRef.current > 1
+        )
+          return;
+
+        directionRef.current = DIRECTION.RIGHT;
         setDirection(DIRECTION.RIGHT);
       }
     };
@@ -161,6 +195,8 @@ function App() {
           consumeFood(newSnakeCells);
         }
 
+        snakeCellsSizeRef.current = newSnakeCells.size;
+
         setSnakeCells(newSnakeCells);
       } else {
         openModal();
@@ -173,7 +209,7 @@ function App() {
     // Generate food cell at random position
     let value = getFoodCell(board);
 
-    while (snakeCells.has(value) && value === foodCell.value) {
+    while (snakeCells.has(value) || value === foodCell.value) {
       value = getFoodCell(board);
     }
 
@@ -194,6 +230,8 @@ function App() {
       board
     );
 
+    // After creation of new node make sure the direction is set to the appropriate directiont
+    newTailNode.data!.direction = snake.tail!.data!.direction;
     // Insertion at beginning of tail, dequeue -> add it to class
     const temp = snake.tail;
     snake.tail = newTailNode;
@@ -220,6 +258,7 @@ function App() {
     });
 
     setDirection(generateRandomNum(0, 3));
+    setScore(0);
 
     closeModal();
   };
@@ -233,27 +272,66 @@ function App() {
         <Box outline='2px solid white' outlineColor='blue.200'>
           {board.map((row, index) => (
             <Flex key={index}>
-              {row.map((cell) => (
-                <Box
-                  w='50px'
-                  h='50px'
-                  outline='1px solid white'
-                  outlineColor='blue.200'
-                  key={cell}
-                  bg={
-                    snakeCells.has(cell)
-                      ? 'green.500'
-                      : cell === foodCell.value
-                      ? 'violet'
-                      : undefined
-                  }
-                ></Box>
-              ))}
+              {row.map((cell) => {
+                // Let this be standard cell
+                let cellType: any = null;
+                if (cell === snakeRef.current.head!.data!.value) {
+                  cellType = (
+                    <HeadCell direction={snake.head!.data!.direction} />
+                  );
+                } else if (cell === foodCell.value ? 'violet' : undefined) {
+                  cellType = <FoodCell food={foodCell.food} />;
+                } else if (
+                  snake.tail?.data?.value === cell &&
+                  snake.tail.data.value !== snake.head?.data?.value
+                ) {
+                  const snakeTailDirection = snake.tail!.data!.direction;
+                  const snakeTailNextDirection =
+                    snake.tail?.next?.data?.direction;
+
+                  cellType = (
+                    <TailCell
+                      direction={snakeTailDirection}
+                      nextDirection={snakeTailNextDirection}
+                      // If it will change direction in the next step
+                      isTransitional={
+                        snakeTailDirection !== snakeTailNextDirection
+                      }
+                    />
+                  );
+                } else if (snakeCells.has(cell)) {
+                  const match = snake.find((node) => node.data?.value === cell);
+
+                  const currentDirection = match?.currentNode.data?.direction;
+                  const nextDirection = match?.nextNode?.data?.direction;
+
+                  cellType = (
+                    <StandardCell
+                      direction={currentDirection}
+                      nextDirection={nextDirection}
+                      isTransitional={currentDirection !== nextDirection}
+                    />
+                  );
+                }
+
+                return (
+                  <Box
+                    w='50px'
+                    h='50px'
+                    outline='1px solid white'
+                    outlineColor='blue.200'
+                    key={cell}
+                  >
+                    {cellType}
+                  </Box>
+                );
+              })}
             </Flex>
           ))}
         </Box>
         <Controller
           changeDirection={(_direction: DIRECTION) => setDirection(_direction)}
+          currentDirection={direction}
         />
       </Flex>
       <GameOverModal
@@ -267,98 +345,3 @@ function App() {
 }
 
 export default App;
-
-function getNextNodeCoordsForDirection(node: Node, direction: DIRECTION) {
-  switch (direction) {
-    case DIRECTION.RIGHT:
-      return {
-        row: node.data.row,
-        cell: node.data.cell + 1,
-      };
-    case DIRECTION.LEFT:
-      return {
-        row: node.data.row,
-        cell: node.data.cell - 1,
-      };
-    case DIRECTION.UP:
-      return {
-        cell: node.data.cell,
-        row: node.data.row - 1,
-      };
-    default:
-      // case DIRECTION.DOWN
-      return {
-        cell: node.data.cell,
-        row: node.data.row + 1,
-      };
-  }
-}
-
-// workaround: store every direction in the snake node data
-function getDirectionForNode(node: Node<CellData>) {
-  if (!node.next) return null;
-  const { row, cell } = node.data!;
-  const { row: nextRow, cell: nextCell } = node.next.data!;
-
-  if (row === nextRow && cell + 1 === nextCell) return DIRECTION.RIGHT;
-  if (row === nextRow && cell - 1 === nextCell) return DIRECTION.LEFT;
-  if (row - 1 === nextRow && cell === nextCell) return DIRECTION.UP;
-  if (row + 1 === nextRow && cell === nextCell) return DIRECTION.DOWN;
-}
-
-function getOppositeDirection(direction: DIRECTION) {
-  if (direction === DIRECTION.LEFT) return DIRECTION.RIGHT;
-  if (direction === DIRECTION.RIGHT) return DIRECTION.LEFT;
-  if (direction === DIRECTION.DOWN) return DIRECTION.UP;
-  // if (direction === DIRECTION.UP) return DIRECTION.DOWN;
-  return DIRECTION.DOWN;
-}
-
-// function getNextNodeCoordsForDirection(node: Node, direction: DIRECTION) {}
-
-function getNextNodeForDirection(
-  node: Node<CellData>,
-  direction: DIRECTION,
-  board: number[][]
-) {
-  const nextNodeCoords = getNextNodeCoordsForDirection(node, direction);
-  return new Node<CellData>({
-    ...nextNodeCoords,
-    value: board[nextNodeCoords.row][nextNodeCoords.cell],
-    direction,
-  });
-}
-
-function getFoodCell(board: number[][]) {
-  let row = generateRandomNum(0, board.length - 1);
-  let cell = generateRandomNum(0, board[0].length - 1);
-
-  return board[row][cell];
-}
-
-function getFoodType() {
-  const randomNum = Math.random();
-  // 50% to get meat if above 0.25 it's protein else meat
-  let food: FoodType = randomNum > 0.25 ? 'protein' : 'meat';
-  if (randomNum > 0.5 && randomNum < 0.8) {
-    food = 'creatine';
-  } else if (randomNum >= 0.8) {
-    food = 'steroid';
-  }
-  return food;
-}
-
-function changeDirection(
-  newHead: Node,
-  snake: SingleLinkedList<CellData>,
-  snakeCells: Set<number>
-) {
-  // Check if it's out of bound. The newHead.data.value will be undefined, or you can check by checking the length of border etc..
-  const newSnakeCells = new Set(snakeCells);
-  newSnakeCells.delete(snake.tail!.data!.value);
-  newSnakeCells.add(newHead.data.value);
-
-  snake.moveList(newHead);
-
-  return newSnakeCells;
-}
