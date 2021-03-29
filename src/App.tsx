@@ -22,6 +22,7 @@ import { HeadCell } from './components/Cells/HeadCell';
 import { StandardCell } from './components/Cells/StandardCell';
 import { FoodCell } from './components/Cells/FoodCell';
 import { TailCell } from './components/Cells/TailCell';
+import { useSnakeMovement } from './custom-hooks/useSnakeMovement';
 
 export type FoodType = 'protein' | 'meat' | 'steroid' | 'creatine';
 export type CellData = {
@@ -72,13 +73,9 @@ function App() {
   const [snakeCells, setSnakeCells] = useState(
     new Set([snakeRef.current.head?.data?.value || 1])
   );
-  const [direction, setDirection] = useState<DIRECTION>(
+  const { direction, setDirection, snakeCellsSizeRef } = useSnakeMovement(
     snakeRef.current.head!.data!.direction
   );
-  const directionRef = useRef<DIRECTION>(
-    snakeRef.current.head!.data!.direction
-  );
-  const snakeCellsSizeRef = useRef<number>(1);
   const [score, setScore] = useState(0);
   const [foodCell, setFoodCell] = useState({
     value: getFoodCell(board),
@@ -92,58 +89,6 @@ function App() {
   useSetInterval(() => {
     if (!gameOver) moveSnake();
   }, SNAKE_SPEED * 2);
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      console.log('DIRECTION', directionRef.current);
-      // TODO: SEPERATE THIS LOGIC AND ADD IT TO THE CONTROLLER ITSELF. I recommend adding custom hook
-      const key = e.key.toLocaleLowerCase();
-      if (key === 'a' || key === 'arrowleft') {
-        // Handles the case where if snake length is 2, and snake is moving to left, and user decides/misclicks to go opposite -> right, then the game will end and that should not happen
-        if (
-          directionRef.current === getOppositeDirection(DIRECTION.LEFT) &&
-          snakeCellsSizeRef.current > 1
-        )
-          return;
-
-        directionRef.current = DIRECTION.LEFT;
-        setDirection(DIRECTION.LEFT);
-      } else if (key === 'w' || key === 'arrowup') {
-        if (
-          directionRef.current === getOppositeDirection(DIRECTION.UP) &&
-          snakeCellsSizeRef.current > 1
-        )
-          return;
-
-        directionRef.current = DIRECTION.UP;
-        setDirection(DIRECTION.UP);
-      } else if (key === 's' || key === 'arrowdown') {
-        if (
-          directionRef.current === getOppositeDirection(DIRECTION.DOWN) &&
-          snakeCellsSizeRef.current > 1
-        )
-          return;
-
-        directionRef.current = DIRECTION.DOWN;
-        setDirection(DIRECTION.DOWN);
-      } else if (key === 'd' || key === 'arrowright') {
-        if (
-          directionRef.current === getOppositeDirection(DIRECTION.RIGHT) &&
-          snakeCellsSizeRef.current > 1
-        )
-          return;
-
-        directionRef.current = DIRECTION.RIGHT;
-        setDirection(DIRECTION.RIGHT);
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown, true);
-
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, []);
 
   const snake = snakeRef.current;
 
