@@ -23,6 +23,15 @@ import { StandardCell } from './components/Cells/StandardCell';
 import { FoodCell } from './components/Cells/FoodCell';
 import { TailCell } from './components/Cells/TailCell';
 import { useSnakeMovement } from './custom-hooks/useSnakeMovement';
+import { useCountdown } from './custom-hooks/useCountdown';
+import { AvatarBar } from './components/AvatarBar';
+import {
+  FOOD_DURATION,
+  SNAKE_SPEED,
+  SNAKE_SPEED_ON_ROIDS,
+  SNAKE_SPEED_ON_CREATINE,
+  STEROID_EFFECT_DURATION,
+} from './consts';
 
 export type FoodType = 'protein' | 'meat' | 'steroid' | 'creatine';
 export type CellData = {
@@ -61,10 +70,6 @@ const createBoard = (boardSize = BOARD_SIZE) => {
   return board;
 };
 
-const SNAKE_SPEED = 250;
-const SNAKE_SPEED_ON_ROIDS = SNAKE_SPEED * 1.75;
-const SNAKE_SPEED_ON_CREATINE = SNAKE_SPEED * 1.5;
-
 function App() {
   const [board, setBoard] = useState(createBoard());
   const snakeRef = useRef(
@@ -76,19 +81,52 @@ function App() {
   const { direction, setDirection, snakeCellsSizeRef } = useSnakeMovement(
     snakeRef.current.head!.data!.direction
   );
+  // TODO: maybe remove setscore since this is equal to snakeCells.size - 1 and snakeCellsRef - 1, and it causes unecessery render
   const [score, setScore] = useState(0);
   const [foodCell, setFoodCell] = useState({
     value: getFoodCell(board),
     food: getFoodType(),
   });
+  const steroidConsumedRef = useRef(false);
+  const {
+    count: steroidEffectDuration,
+    resetCount: resetSteroidEffectDuration,
+    cancelCountdown: cancelSteroidEffectDuration,
+  } = useCountdown(0, removeCells);
   const {
     isOpen: gameOver,
     onOpen: openModal,
     onClose: closeModal,
   } = useDisclosure();
+  const {
+    count: foodDuration,
+    resetCount: resetFoodDuration,
+    cancelCountdown: cancelFoodDuration,
+  } = useCountdown(FOOD_DURATION, () => {
+    if (!gameOver) {
+      generateFoodCell();
+      resetFoodDuration();
+    }
+  });
+  const snakeFoodConsumed = useRef<FoodType>();
+  const effects = useRef<{ [food: string]: number | null }>({});
+
+  let snakeSpeed = SNAKE_SPEED;
+  if (steroidConsumedRef.current) {
+    snakeSpeed = SNAKE_SPEED_ON_ROIDS;
+  } else if (snakeFoodConsumed.current === 'creatine') {
+    snakeSpeed = SNAKE_SPEED_ON_CREATINE;
+  }
+
   useSetInterval(() => {
     if (!gameOver) moveSnake();
-  }, SNAKE_SPEED * 2);
+  }, snakeSpeed);
+
+  useEffect(() => {
+    if (steroidEffectDuration) {
+      effects.current['steroid'] = steroidEffectDuration;
+    }
+  }, [steroidEffectDuration]);
 
   const snake = snakeRef.current;
 
@@ -96,30 +134,26 @@ function App() {
     switch (direction) {
       case DIRECTION.RIGHT:
         if (snake.head!.data!.cell + 1 === board[0].length) {
-          // setGameOver(true);
-          openModal();
+          gameOverHandler();
           return true;
         }
         break;
       case DIRECTION.LEFT:
         if (snake.head!.data!.cell - 1 < 0) {
-          // setGameOver(true);
-          openModal();
+          gameOverHandler();
           return true;
         }
         break;
       case DIRECTION.UP:
         if (snake.head!.data!.row - 1 < 0) {
-          // setGameOver(true);
-          openModal();
+          gameOverHandler();
           return true;
         }
         break;
       default:
         // case DIRECTION.DOWN
         if (snake.head!.data!.row + 1 === board[0].length) {
-          // setGameOver(true);
-          openModal();
+          gameOverHandler();
           return true;
         }
         break;
@@ -166,8 +200,44 @@ function App() {
     });
   };
 
-  // Grow the snake and do the effect
-  const consumeFood = (newSnakeCells: Set<number>) => {
+  function gameOverHandler() {
+    openModal();
+    cancelFoodDuration();
+
+    // Turn off effects
+    if (steroidConsumedRef.current) {
+      steroidConsumedRef.current = false;
+      delete effects.current['steroid'];
+
+      cancelSteroidEffectDuration();
+    }
+  }
+
+  function removeCells() {
+    if (!gameOver) {
+      // For roid effect
+      if (steroidConsumedRef.current && snakeCells.size > 1) {
+        console.log(
+          `Mssg to display: You haven't consumed steroids in the last 30 sec, you will shrink`
+        );
+        const newSnakeCells = new Set(snakeCells);
+
+        const removeCellsNumber =
+          newSnakeCells.size - 3 > 1 ? newSnakeCells.size - 3 : 1;
+        while (newSnakeCells.size !== removeCellsNumber) {
+          const removedTail = snake.deque();
+          newSnakeCells.delete(removedTail!.data!.value);
+        }
+
+        setScore(newSnakeCells.size - 1);
+
+        steroidConsumedRef.current = false;
+        setSnakeCells(newSnakeCells);
+      }
+    }
+  }
+
+  function growSnake(newSnakeCells: Set<number>) {
     const oppositeDirOfTail = getOppositeDirection(snake.tail!.data!.direction);
     const newTailNode = getNextNodeForDirection(
       snake.tail!,
@@ -177,14 +247,50 @@ function App() {
 
     // After creation of new node make sure the direction is set to the appropriate directiont
     newTailNode.data!.direction = snake.tail!.data!.direction;
-    // Insertion at beginning of tail, dequeue -> add it to class
+    // Insertion at beginning of tail
     const temp = snake.tail;
     snake.tail = newTailNode;
     snake.tail.next = temp;
 
     newSnakeCells.add(newTailNode.data!.value);
+  }
 
-    setScore(score + 1);
+  // Grow the snake and do the effect
+  const consumeFood = (newSnakeCells: Set<number>) => {
+    if (foodCell.food === 'protein' || foodCell.food === 'meat') {
+      growSnake(newSnakeCells);
+
+      effects.current[foodCell.food] = Infinity;
+
+      snakeFoodConsumed.current = 'protein';
+      setScore(score + 1);
+    } else if (foodCell.food === 'creatine') {
+      // TODO: add effect for creatine. Reverse if steroid not consumed
+      growSnake(newSnakeCells);
+
+      // Add the effects
+      // if (!steroidConsumedRef.current) {
+      // snake.reverse()
+      // }
+
+      // Add the duration
+      effects.current['creatine'] = 10;
+
+      snakeFoodConsumed.current = 'creatine';
+      setScore(score + 1);
+    } else if (foodCell.food === 'steroid') {
+      for (let index = 0; index < 2; index++) {
+        growSnake(newSnakeCells);
+      }
+
+      snakeFoodConsumed.current = 'steroid';
+      steroidConsumedRef.current = true;
+      resetSteroidEffectDuration(STEROID_EFFECT_DURATION);
+
+      setScore(score + 2);
+    }
+
+    resetFoodDuration();
     // generate new food cell
     generateFoodCell();
   };
@@ -197,23 +303,40 @@ function App() {
 
     // setSnakeCells(new Set([snake.head!.data!.value]));
     setSnakeCells(new Set([snakeRef.current.head!.data!.value]));
-    setFoodCell({
+
+    const newFoodCell = {
       value: getFoodCell(board),
       food: getFoodType(),
-    });
+    };
+    setFoodCell(newFoodCell);
+    snakeFoodConsumed.current = undefined;
 
     setDirection(generateRandomNum(0, 3));
     setScore(0);
 
+    resetFoodDuration();
+
     closeModal();
   };
+
+  // TODO: Add effect for steroid cancelation / side effect timer.  maybe
+  const effectsArr: { duration: number | null; food: FoodType }[] = [];
+  for (let effect in effects.current) {
+    effectsArr.push({
+      duration: (effects.current as any)[effect] as number | null,
+      food: effect as FoodType,
+    });
+  }
 
   return (
     <Center minH='100vh' bg='blue.900' color='white'>
       <Flex direction='column' align='center'>
         {/* Or image logo */}
+        <AvatarBar effects={effectsArr} score={score} maxScore={score} />
         <Heading>Snake On Roids</Heading>
         <Text>Score: {score}</Text>
+        <Text>Until next food: {foodDuration}</Text>
+        <Text>Steroid effect expires in: {steroidEffectDuration}</Text>
         <Box outline='2px solid white' outlineColor='blue.200'>
           {board.map((row, index) => (
             <Flex key={index}>

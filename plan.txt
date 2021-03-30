@@ -15,13 +15,25 @@
 [x] Create game over modal
 [x] Add score
 [x] Fix opposite key bug
-[] Add timer for food expiration
+[x] Add timer for food expiration
 [] Add food effects to snake (diff type)
-    [] Steroid cell - hair falls and snake grows twice + scores goes twice and snake moves 1.75 faster, however if another steroid is not consumed in the next 30s the snake goes back -3, minimum is 1 cell, 
-    [] Creatine cell - snake grows for 1 + arms grow + speed goes up to 1.25. Since snake is hyped that it consumed creatine it goes reverse, so reverse linked list. Side effect: if 5 creatines consumed in the last 50 seconds -> hair falls
-    [] Meat cell and Protein powder - snake grows for 1 + arms grow tiny bit
-    [] Implement timeout for each food
+    [x] Steroid cell - snake grows twice + scores goes twice + snake moves 1.5 faster, however if another steroid is not consumed in the next 15s the snake goes back -3, minimum is 1 cell, 
+    [] Creatine cell - snake grows for 1 + arms grow + speed goes up to 1.25. Since snake is hyped that it consumed creatine it goes reverse, so reverse linked list. Side effect: if 5 creatines consumed in the last 50 seconds -> hair falls. If snake is under the effect of steroid that it's immune to this effect
+    [x] Meat cell and Protein powder - snake grows for 1 
+    [x] Implement timeout for each food
+    [x] Add effect on side of the screen something like lotro has with health as score, and power as max score and effects added beneath with certain icons and beneath that timer
+    [] Handle effects priority, for example roid effects > creatine effects > protein/meat effect. Add X to icons that don't work
+[] Design snake arms and effects
+    [] Steroid cell - arms grow x1.5
+    [] Creatine cell - arms grow x1.2
+    [] Meat cell and Protein powder - arms grow x1.1
+[] Design snake hair and hair fall effect
+    [] Steroid cell - hair falls x2
+    [] Creatine cell - hair falls x1.2
+    [] Meat cell and Protein powder - hair doesn't fall
 [] Future
     [] Implement some kind of max score 
     [] Add leaderboard, probably using firebase
     [] Make it multiplayer
+[] Bugs
+    [] If snake is going right and up/down then left is clicked it will cancel game -> gameOver. That happens because the check is not correct inside useMovement and in my opinion the direction should be handles with useRef
