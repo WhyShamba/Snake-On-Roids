@@ -93,6 +93,19 @@ export class SingleLinkedList<DataType = any> {
     }
   };
 
+  // QUEUE methods
+  // O(1)
+  deque = () => {
+    const temp = this.tail!;
+
+    // If tail is not the head
+    if (this.tail?.next) {
+      this.tail = this.tail.next!;
+    }
+
+    return temp;
+  };
+
   // O(n)
   print = () => {
     let current = this.tail;

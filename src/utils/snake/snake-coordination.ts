@@ -60,7 +60,8 @@ export function getNextNodeForDirection(
   const nextNodeCoords = getNextNodeCoordsForDirection(node, direction);
   return new Node<CellData>({
     ...nextNodeCoords,
-    value: board[nextNodeCoords.row][nextNodeCoords.cell],
+    // TODO: HANDLE THIS BETTER
+    value: board[nextNodeCoords.row]?.[nextNodeCoords.cell],
     direction,
   });
 }
