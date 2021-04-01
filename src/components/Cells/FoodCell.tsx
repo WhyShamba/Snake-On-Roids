@@ -1,6 +1,6 @@
 import { Box, Image } from '@chakra-ui/react';
 import React from 'react';
-import { FoodType } from '../../App';
+import { FoodType } from '../../containers/Game';
 
 interface FoodCellProps {
   food: FoodType;

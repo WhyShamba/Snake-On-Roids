@@ -20,10 +20,8 @@ export class SingleLinkedList<DataType = any> {
   // O(1)
   add = (node: Node<DataType>) => {
     if (this.head) {
-      console.log('Node: ', node);
       this.head.next = node;
       this.head = node;
-      console.log('Current head', this.head);
     } else {
       this.head = node;
     }
@@ -60,20 +58,28 @@ export class SingleLinkedList<DataType = any> {
   };
 
   // O(n)
-  reverse = () => {
-    let current = this.tail;
+  reverse = (onReverse?: (node: Node<DataType>) => any) => {
+    let current = this.tail!;
     let previous = null;
     while (true) {
+      // Callback function to manipulate the data inside each node on reverse
+      if (onReverse) {
+        onReverse(current);
+      }
+
       const temp = current!.next;
       current!.next = previous;
+
       //   If i'm at head
       if (temp === null) {
         this.tail = current;
         break;
       }
+
       if (previous === null) {
         this.head = current;
       }
+
       previous = current;
       current = temp!;
     }
@@ -111,9 +117,12 @@ export class SingleLinkedList<DataType = any> {
     let current = this.tail;
     let str = '';
     while (current) {
-      str += str ? `->${current.data}` : current.data;
+      str += str
+        ? `->${JSON.stringify(current.data, null, 2)}`
+        : JSON.stringify(current.data, null, 2);
       current = current.next;
     }
     console.log(str);
+    return str;
   };
 }

@@ -1,16 +1,13 @@
 import { RepeatIcon } from '@chakra-ui/icons';
 import {
+  Button,
+  Flex,
   Modal,
-  ModalOverlay,
+  ModalBody,
   ModalContent,
   ModalHeader,
-  ModalCloseButton,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Box,
+  ModalOverlay,
   Text,
-  Flex,
 } from '@chakra-ui/react';
 import React from 'react';
 

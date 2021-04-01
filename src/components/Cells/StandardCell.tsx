@@ -1,6 +1,6 @@
 import { Box, BoxProps } from '@chakra-ui/react';
 import React from 'react';
-import { DIRECTION } from '../../App';
+import { DIRECTION } from '../../containers/Game';
 import { createRotationStyle } from './TailCell';
 
 interface StandardCellProps {

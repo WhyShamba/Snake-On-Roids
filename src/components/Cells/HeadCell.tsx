@@ -1,6 +1,6 @@
 import { Box, BoxProps } from '@chakra-ui/layout';
 import React from 'react';
-import { DIRECTION } from '../../App';
+import { DIRECTION } from '../../containers/Game';
 
 interface HeadCellProps {
   direction: DIRECTION;

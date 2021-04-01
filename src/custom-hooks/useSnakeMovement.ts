@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { DIRECTION } from '../App';
+import { DIRECTION } from '../containers/Game';
 import { getOppositeDirection } from '../utils/snake/snake-coordination';
 
 export const useSnakeMovement = (initialDirection: DIRECTION) => {
@@ -9,8 +9,6 @@ export const useSnakeMovement = (initialDirection: DIRECTION) => {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent): void => {
-      console.log('DIRECTION', directionRef.current);
-      console.log('DIRECTION', e.key);
       const key = e.key.toLocaleLowerCase();
       if (key === 'a' || key === 'arrowleft') {
         _setDirection(DIRECTION.LEFT);
@@ -31,15 +29,14 @@ export const useSnakeMovement = (initialDirection: DIRECTION) => {
   }, []);
 
   //   Validates and sets direction
-  const _setDirection = (_direction: DIRECTION) => {
-    console.log('Im called with: ', _direction);
+  const _setDirection = (_direction: DIRECTION, withCheck = true) => {
     // Handles the case where if snake length is 2, and snake is moving to left, and user decides/misclicks to go opposite -> right, then the game will end and that should not happen
     if (
       directionRef.current === getOppositeDirection(_direction) &&
-      snakeCellsSizeRef.current > 1
+      snakeCellsSizeRef.current > 1 &&
+      withCheck
     )
       return;
-    console.log('I continue');
 
     directionRef.current = _direction;
     setDirection(_direction);

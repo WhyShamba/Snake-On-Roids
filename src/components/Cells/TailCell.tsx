@@ -1,6 +1,6 @@
 import { Box, BoxProps } from '@chakra-ui/layout';
 import React from 'react';
-import { DIRECTION } from '../../App';
+import { DIRECTION } from '../../containers/Game';
 
 interface TailCellProps {
   direction: DIRECTION;
@@ -23,7 +23,6 @@ export const TailCell: React.FC<TailCellProps> = ({
 
   let directionForStyle = direction;
   if (isTransitional && nextDirection !== undefined) {
-    console.log('Using next direction');
     directionForStyle = nextDirection;
   }
 
@@ -41,18 +40,6 @@ export const TailCell: React.FC<TailCellProps> = ({
       style.transform = createRotationStyle(0);
       break;
   }
-
-  //   Logic for transitonal cells
-  //   if (isTransitional) {
-  //     if (direction === DIRECTION.UP && nextDirection === DIRECTION.LEFT) {
-  //       style.borderTopLeftRadius = 'unset';
-  //     } else if (
-  //       direction === DIRECTION.UP &&
-  //       nextDirection === DIRECTION.RIGHT
-  //     ) {
-  //       style.borderBottomLeftRadius = 'unset';
-  //     }
-  //   }
 
   return (
     <Box w='100%' h='100%' bg='green.500' {...style}>

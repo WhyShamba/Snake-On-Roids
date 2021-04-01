@@ -1,4 +1,4 @@
-import { CellData, FoodType } from '../../App';
+import { CellData, FoodType } from '../../containers/Game';
 import { generateRandomNum } from '../generateRandomNum';
 
 // Now into consideration we have that the rows and column will have same number of rows/columns

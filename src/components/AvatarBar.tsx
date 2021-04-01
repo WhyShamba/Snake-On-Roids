@@ -8,7 +8,7 @@ import {
   Text,
 } from '@chakra-ui/react';
 import React from 'react';
-import { FoodType } from '../App';
+import { FoodType } from '../containers/Game';
 
 interface AvatarBarProps {
   effects: {
@@ -37,13 +37,13 @@ export const AvatarBar: React.FC<AvatarBarProps> = ({
       >
         <Avatar size='lg' name='Snake Avatar' src='/img/avatar.png' mr={2} />
         <VStack w='100%'>
-          <Box bg='green.500' w='100%' borderRadius='sm' pl={2}>
+          <Box bg='green.500' w='100%' borderRadius='lg' pl={2}>
             Score:{' '}
             <Text as='span' fontWeight='bold'>
               {score}
             </Text>
           </Box>
-          <Box bg='blue.500' w='100%' borderRadius='sm' pl={2}>
+          <Box bg='blue.500' w='100%' borderRadius='lg' pl={2}>
             Max Score:{' '}
             <Text as='span' fontWeight='bold'>
               {score}
