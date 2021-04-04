@@ -1,11 +1,28 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Box, Center, Flex, Heading, Text } from '@chakra-ui/layout';
-import { Node, SingleLinkedList } from '../utils/SingleLinkedList';
-import { Controller } from '../components/Controller';
-import { generateRandomNum } from '../utils/generateRandomNum';
-import { useSetInterval } from '../custom-hooks/useSetInterval';
+import { Box, Flex } from '@chakra-ui/layout';
 import { useDisclosure } from '@chakra-ui/react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { AvatarBar } from '../components/AvatarBar';
+import { FoodCell } from '../components/Cells/FoodCell';
+import { HeadCell } from '../components/Cells/HeadCell';
+import { StandardCell } from '../components/Cells/StandardCell';
+import { TailCell } from '../components/Cells/TailCell';
+import { Controller } from '../components/Controller';
 import { GameOverModal } from '../components/GameOverModal';
+import {
+  CREATINE_EFFECT_DURATION,
+  FOOD_DURATION,
+  STEROID_EFFECT_DURATION,
+} from '../consts';
+import { MainContext } from '../context';
+import { useCountdown } from '../custom-hooks/useCountdown';
+import { useSetInterval } from '../custom-hooks/useSetInterval';
+import { useSnakeMovement } from '../custom-hooks/useSnakeMovement';
+import { generateRandomNum } from '../utils/generateRandomNum';
+import { Node, SingleLinkedList } from '../utils/SingleLinkedList';
+import {
+  getSnakeSpeedOnCreatine,
+  getSnakeSpeedOnRoids,
+} from '../utils/snake/calculateSnakeSpeed';
 import {
   getFoodCell,
   getFoodType,
@@ -16,22 +33,6 @@ import {
   getNextNodeForDirection,
   getOppositeDirection,
 } from '../utils/snake/snake-coordination';
-import { HeadCell } from '../components/Cells/HeadCell';
-import { StandardCell } from '../components/Cells/StandardCell';
-import { FoodCell } from '../components/Cells/FoodCell';
-import { TailCell } from '../components/Cells/TailCell';
-import { useSnakeMovement } from '../custom-hooks/useSnakeMovement';
-import { useCountdown } from '../custom-hooks/useCountdown';
-import { AvatarBar } from '../components/AvatarBar';
-import {
-  FOOD_DURATION,
-  SNAKE_SPEED,
-  SNAKE_SPEED_ON_ROIDS,
-  SNAKE_SPEED_ON_CREATINE,
-  STEROID_EFFECT_DURATION,
-  CREATINE_EFFECT_DURATION,
-} from '../consts';
-import { MainContext } from '../context';
 
 export type FoodType = 'protein' | 'meat' | 'steroid' | 'creatine';
 export type CellData = {
@@ -49,10 +50,7 @@ export enum DIRECTION {
   DOWN,
 }
 
-let BOARD_SIZE = 10 * 10;
-const createBoard = (boardSize = BOARD_SIZE) => {
-  if (boardSize !== BOARD_SIZE) BOARD_SIZE = boardSize;
-
+const createBoard = (boardSize: number) => {
   // Get the number of rows/cells
   const rowsAndCells = Math.sqrt(boardSize);
 
@@ -72,8 +70,13 @@ const createBoard = (boardSize = BOARD_SIZE) => {
 
 const Game = () => {
   // Global game settings
-  const { togglePlayGame } = useContext(MainContext);
-  const [board, setBoard] = useState(createBoard());
+  const {
+    togglePlayGame,
+    boardSize,
+    snakeSpeed: initialSnakeSpeed,
+    disableController,
+  } = useContext(MainContext);
+  const [board, setBoard] = useState(createBoard(boardSize));
   const snakeRef = useRef(
     new SingleLinkedList(new Node(getInitialSnakeCell(board)))
   );
@@ -126,15 +129,16 @@ const Game = () => {
   });
   const snakeFoodConsumed = useRef<FoodType>();
   const effects = useRef<{ [food: string]: number | null }>({});
+  const cellRef = useRef<HTMLDivElement | null>(null);
 
-  let snakeSpeed = SNAKE_SPEED;
+  let snakeSpeed = initialSnakeSpeed;
   if (steroidConsumedRef.current) {
-    snakeSpeed = SNAKE_SPEED_ON_ROIDS;
+    snakeSpeed = getSnakeSpeedOnRoids(snakeSpeed);
   } else if (
     snakeFoodConsumed.current === 'creatine' ||
     creatineEffectDuration
   ) {
-    snakeSpeed = SNAKE_SPEED_ON_CREATINE;
+    snakeSpeed = getSnakeSpeedOnCreatine(snakeSpeed);
   }
 
   useSetInterval(() => {
@@ -381,9 +385,7 @@ const Game = () => {
           score={score}
           untilNextFood={foodDuration}
         />
-        <Text>Score: {score}</Text>
-        <Text>Until next food: {foodDuration}</Text>
-        <Box outline='2px solid white' outlineColor='#2f2828'>
+        <Box outline='2px solid white' outlineColor='#2f2828' w='550px'>
           {board.map((row, index) => (
             <Flex key={index}>
               {row.map((cell) => {
@@ -430,10 +432,10 @@ const Game = () => {
 
                 return (
                   <Box
-                    w='50px'
-                    h='50px'
+                    h={cellRef.current?.clientWidth}
+                    ref={cellRef}
+                    flex={1}
                     outline='1px solid #2f2828'
-                    // outlineColor='blue.200'
                     key={cell}
                   >
                     {cellType}
@@ -443,10 +445,14 @@ const Game = () => {
             </Flex>
           ))}
         </Box>
-        <Controller
-          changeDirection={(_direction: DIRECTION) => setDirection(_direction)}
-          currentDirection={direction}
-        />
+        {!disableController && (
+          <Controller
+            changeDirection={(_direction: DIRECTION) =>
+              setDirection(_direction)
+            }
+            currentDirection={direction}
+          />
+        )}
       </Flex>
       <GameOverModal
         isOpen={gameOver}

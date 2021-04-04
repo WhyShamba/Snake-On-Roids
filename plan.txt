@@ -43,6 +43,8 @@
     [] Creatine cell - if 5 creatines consumed in the last 50 seconds -> hair falls x1.2
     [] Meat cell and Protein powder - hair doesn't fall
 
+[x] Add board/snake speed functionality to game
+
 [] Clean code
 
 [] Add X style to effects that don't work because steroid effect > creatine effect
