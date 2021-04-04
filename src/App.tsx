@@ -90,6 +90,7 @@ function App() {
           snakeSpeed: settings.snakeSpeed,
           disableController: settings.disableController,
           mute: settings.mute,
+          playGame,
           setBoardSize: (boardSize) => setSettings({ ...settings, boardSize }),
           setMusicVolume: (musicVolume) =>
             setSettings({ ...settings, musicVolume }),
@@ -101,6 +102,7 @@ function App() {
               disableController: !settings.disableController,
             }),
           toggleMute: () => setSettings({ ...settings, mute: !settings.mute }),
+          togglePlayGame: () => setPlayGame(!playGame),
         }}
       >
         {component}

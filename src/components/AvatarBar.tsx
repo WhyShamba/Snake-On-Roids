@@ -16,12 +16,12 @@ interface AvatarBarProps {
     duration: number | null;
   }[];
   score: number;
-  maxScore: number;
+  untilNextFood: number;
 }
 
 export const AvatarBar: React.FC<AvatarBarProps> = ({
   effects,
-  maxScore,
+  untilNextFood,
   score,
 }) => {
   return (
@@ -44,9 +44,9 @@ export const AvatarBar: React.FC<AvatarBarProps> = ({
             </Text>
           </Box>
           <Box bg='blue.500' w='100%' borderRadius='lg' pl={2}>
-            Max Score:{' '}
+            Next food in:{' '}
             <Text as='span' fontWeight='bold'>
-              {score}
+              {untilNextFood}
             </Text>
           </Box>
         </VStack>

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Box, Center, Flex, Heading, Text } from '@chakra-ui/layout';
 import { Node, SingleLinkedList } from '../utils/SingleLinkedList';
 import { Controller } from '../components/Controller';
@@ -31,6 +31,7 @@ import {
   STEROID_EFFECT_DURATION,
   CREATINE_EFFECT_DURATION,
 } from '../consts';
+import { MainContext } from '../context';
 
 export type FoodType = 'protein' | 'meat' | 'steroid' | 'creatine';
 export type CellData = {
@@ -70,6 +71,8 @@ const createBoard = (boardSize = BOARD_SIZE) => {
 };
 
 const Game = () => {
+  // Global game settings
+  const { togglePlayGame } = useContext(MainContext);
   const [board, setBoard] = useState(createBoard());
   const snakeRef = useRef(
     new SingleLinkedList(new Node(getInitialSnakeCell(board)))
@@ -373,8 +376,11 @@ const Game = () => {
         bg='primary.main'
         zIndex={1}
       >
-        {/* // TODO: The power bar should be seconds until next food */}
-        <AvatarBar effects={effectsArr} score={score} maxScore={score} />
+        <AvatarBar
+          effects={effectsArr}
+          score={score}
+          untilNextFood={foodDuration}
+        />
         <Text>Score: {score}</Text>
         <Text>Until next food: {foodDuration}</Text>
         <Box outline='2px solid white' outlineColor='#2f2828'>
@@ -447,6 +453,7 @@ const Game = () => {
         onClose={closeModal}
         score={score}
         onPlayAgain={playAgain}
+        onMenuClick={togglePlayGame}
       />
     </>
   );

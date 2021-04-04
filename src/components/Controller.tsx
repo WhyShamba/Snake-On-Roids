@@ -21,7 +21,10 @@ export const Controller: React.FC<ControllerProps> = ({
     <Box pos='absolute' right={14} bottom={14}>
       <Box
         pos='relative'
-        bg='#2b6cb040'
+        bg='primary.main'
+        boxShadow='xl'
+        border='1px solid white'
+        borderColor='primary.borderColor'
         w='250px'
         h='120px'
         borderRadius='full'
@@ -57,7 +60,8 @@ export const Controller: React.FC<ControllerProps> = ({
               align='center'
               fontSize='4rem'
               pos='absolute'
-              bg='#112233'
+              bg='primary.main'
+              border='1px solid white'
               userSelect='none'
               cursor='pointer'
               borderRadius='full'

@@ -10,12 +10,14 @@ import {
   Text,
 } from '@chakra-ui/react';
 import React from 'react';
+import { SettingsButton } from './Settings/SettingsButton';
 
 interface GameOverModalProps {
   isOpen: boolean;
   onClose: (...args: any) => any;
   score: number;
   onPlayAgain?: (...args: any) => any;
+  onMenuClick?: (...args: any) => any;
 }
 
 export const GameOverModal: React.FC<GameOverModalProps> = ({
@@ -23,6 +25,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   onClose,
   score,
   onPlayAgain,
+  onMenuClick,
 }) => {
   return (
     <Modal
@@ -30,9 +33,17 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       isCentered
+      returnFocusOnClose={false}
+      autoFocus={false}
     >
       <ModalOverlay />
-      <ModalContent color='white' bg='blue.800'>
+      <ModalContent
+        bg='primary.main'
+        color='white'
+        boxShadow='lg'
+        borderRadius='md'
+        border='1px solid #ffffff0a'
+      >
         <ModalHeader textAlign='center' fontSize='3xl'>
           Game Over
         </ModalHeader>
@@ -43,22 +54,27 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           <Flex direction='column'>
             <Button
               mb={2}
-              bg='blue.700'
+              bg='red.800'
               transition='all 0.2s'
               _hover={{
-                bg: 'blue.900',
+                bg: 'red.700',
               }}
+              _active={{}}
+              _focus={{}}
+              onClick={onMenuClick}
             >
               Menu
             </Button>
             <Button
               rightIcon={<RepeatIcon />}
-              bg='blue.700'
+              bg='red.800'
               transition='all 0.2s'
               _hover={{
-                bg: 'blue.900',
+                bg: 'red.700',
               }}
               onClick={onPlayAgain}
+              _active={{}}
+              _focus={{}}
             >
               Play Again
             </Button>

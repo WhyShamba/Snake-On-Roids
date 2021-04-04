@@ -17,6 +17,9 @@ export type ContextType = {
 
   mute: boolean;
   toggleMute: () => any;
+
+  playGame: boolean;
+  togglePlayGame: () => any;
 };
 
 export const MainContext = createContext<ContextType>({
@@ -30,4 +33,6 @@ export const MainContext = createContext<ContextType>({
   toggleControllerHandler: () => {},
   mute: false,
   toggleMute: () => {},
+  playGame: false,
+  togglePlayGame: () => {},
 });
