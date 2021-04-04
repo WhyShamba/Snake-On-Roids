@@ -373,11 +373,10 @@ const Game = () => {
         bg='primary.main'
         zIndex={1}
       >
-        {/* Or image logo */}
+        {/* // TODO: The power bar should be seconds until next food */}
         <AvatarBar effects={effectsArr} score={score} maxScore={score} />
         <Text>Score: {score}</Text>
         <Text>Until next food: {foodDuration}</Text>
-        {/* // TODO: Style board more */}
         <Box outline='2px solid white' outlineColor='#2f2828'>
           {board.map((row, index) => (
             <Flex key={index}>

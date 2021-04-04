@@ -1,8 +1,9 @@
-[] Create initial menu
-    [] Border selection (8x8, 10x10, 12x12)
-    [] Instructions
-    [] Controller type (asdw, arrows or Touch or via mouse)
-    [] Play button
+[x] Create initial menu
+    [x] Border selection (8x8, 10x10, 12x12)
+    [x] Instructions
+    [x] Controller type (asdw, arrows or Touch)
+    [x] Play button
+    [x] Settings that include voice options and snake speed and board selection
 [X] Create border
 
 [X] Create snake using linked list and snake cells + style
@@ -48,6 +49,13 @@
 
 [] Future
     [] Add sound
+        [x] Main Sound
+        [x] Add mute sound
+        [] Add slider for volume up and down
+        [] Add roid consumed sound
+        [] Add creatine, protein consumed sound
+        [] Add meat consumed sound
+    [] Make responsive
     [] Implement some kind of max score 
     [] Add leaderboard, probably using firebase
     [] Make it multiplayer

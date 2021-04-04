@@ -1,11 +1,27 @@
-import { Button, ButtonProps, Flex, Heading, VStack } from '@chakra-ui/react';
+import {
+  Button,
+  ButtonProps,
+  Flex,
+  Heading,
+  useDisclosure,
+  VStack,
+} from '@chakra-ui/react';
 import React from 'react';
+import { Instructions } from '../components/Instructions/Instructions';
+import { Settings } from '../components/Settings/Settings';
 
 interface MenuProps {
   onPlayGame: () => any;
 }
 
-export const Menu: React.FC<MenuProps> = ({ onPlayGame }) => {
+export const Menu: React.FC<MenuProps> = React.memo(({ onPlayGame }) => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const {
+    isOpen: isOpenSettings,
+    onOpen: openSettings,
+    onClose: closeSettings,
+  } = useDisclosure();
+
   const commonButtonStyle: ButtonProps = {
     w: 'full',
     bg: '#732c2c',
@@ -13,6 +29,9 @@ export const Menu: React.FC<MenuProps> = ({ onPlayGame }) => {
     _hover: {
       bg: '#521f1f',
     },
+
+    _focus: {},
+    _active: {},
   };
   return (
     <Flex
@@ -33,12 +52,18 @@ export const Menu: React.FC<MenuProps> = ({ onPlayGame }) => {
         <Button {...commonButtonStyle} onClick={onPlayGame}>
           Play Game
         </Button>
-        <Button {...commonButtonStyle}>Instructions</Button>
-        <Button {...commonButtonStyle}>Settings</Button>
+        <Button {...commonButtonStyle} onClick={onOpen}>
+          Instructions
+        </Button>
+        <Button {...commonButtonStyle} onClick={openSettings}>
+          Settings
+        </Button>
         <Button w='full' bg='#521f1f' disabled _hover={{ bg: '#521f1f' }}>
           Multiplayer (SOON)
         </Button>
       </VStack>
+      <Instructions isOpen={isOpen} onClose={onClose} />
+      <Settings isOpen={isOpenSettings} onClose={closeSettings} />
     </Flex>
   );
-};
+});
