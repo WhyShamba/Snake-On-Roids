@@ -1,11 +1,13 @@
 import { createContext } from 'react';
 import { BOARD_SIZE, SNAKE_SPEED } from './consts';
+import { createBoard } from './utils/createBoard';
 
 export type ContextType = {
   snakeSpeed: number;
   // Value will be LOW, MEDIUM OR HIGH
   setSnakeSpeed: (value: number) => any;
 
+  board: number[][];
   boardSize: number;
   setBoardSize: (value: number) => any;
 
@@ -35,4 +37,5 @@ export const MainContext = createContext<ContextType>({
   toggleMute: () => {},
   playGame: false,
   togglePlayGame: () => {},
+  board: createBoard(BOARD_SIZE),
 });

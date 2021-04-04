@@ -50,33 +50,14 @@ export enum DIRECTION {
   DOWN,
 }
 
-const createBoard = (boardSize: number) => {
-  // Get the number of rows/cells
-  const rowsAndCells = Math.sqrt(boardSize);
-
-  const board = [];
-  let cellNumber = 0;
-  for (let index = 0; index < rowsAndCells; index++) {
-    board.push(
-      new Array(rowsAndCells).fill(null).map(() => {
-        cellNumber += 1;
-        return cellNumber;
-      })
-    );
-  }
-
-  return board;
-};
-
 const Game = () => {
   // Global game settings
   const {
     togglePlayGame,
-    boardSize,
     snakeSpeed: initialSnakeSpeed,
     disableController,
+    board,
   } = useContext(MainContext);
-  const [board, setBoard] = useState(createBoard(boardSize));
   const snakeRef = useRef(
     new SingleLinkedList(new Node(getInitialSnakeCell(board)))
   );
@@ -304,7 +285,6 @@ const Game = () => {
       snakeFoodConsumed.current = 'protein';
       setScore(score + 1);
     } else if (foodCell.food === 'creatine') {
-      // TODO: add effect for creatine. Reverse if steroid not consumed
       growSnake(newSnakeCells);
 
       // Add the effects
@@ -359,7 +339,6 @@ const Game = () => {
     closeModal();
   };
 
-  // TODO: Add effect for steroid cancelation / side effect timer.  maybe
   const effectsArr: { duration: number | null; food: FoodType }[] = [];
   for (let effect in effects.current) {
     effectsArr.push({

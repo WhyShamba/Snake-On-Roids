@@ -1,6 +1,5 @@
-import { Center, HStack, IconButton } from '@chakra-ui/react';
-import React, { RefObject, useEffect, useRef, useState } from 'react';
-import { BsBellFill, BsTrophy } from 'react-icons/bs';
+import { Center } from '@chakra-ui/react';
+import React, { useEffect, useRef, useState } from 'react';
 import useSound from 'use-sound';
 import { CoolBackground } from './components/CoolBackground/CoolBackground';
 import { MainButtons } from './components/MainButtons';
@@ -8,9 +7,18 @@ import { BOARD_SIZE, SNAKE_SPEED } from './consts';
 import Game from './containers/Game';
 import { Menu } from './containers/Menu';
 import { MainContext } from './context';
+import { createBoard } from './utils/createBoard';
+
+type SettingsType = {
+  boardSize: number;
+  snakeSpeed: number;
+  musicVolume: number;
+  disableController: boolean;
+  mute: boolean;
+};
 
 function App() {
-  const [settings, setSettings] = useState(
+  const [settings, setSettings] = useState<SettingsType>(
     localStorage.getItem('sor:settings')
       ? JSON.parse(localStorage.getItem('sor:settings') || '')
       : {
@@ -31,6 +39,7 @@ function App() {
   });
   const playBtnRef = useRef<HTMLButtonElement | null>(null);
 
+  /* eslint-disable */
   useEffect(() => {
     if (playBtnRef.current && !settings.mute) {
       // Play sound on startup
@@ -91,6 +100,7 @@ function App() {
           disableController: settings.disableController,
           mute: settings.mute,
           playGame,
+          board: createBoard(settings.boardSize),
           setBoardSize: (boardSize) => setSettings({ ...settings, boardSize }),
           setMusicVolume: (musicVolume) =>
             setSettings({ ...settings, musicVolume }),

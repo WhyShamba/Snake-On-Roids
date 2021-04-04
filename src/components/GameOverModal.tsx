@@ -10,7 +10,6 @@ import {
   Text,
 } from '@chakra-ui/react';
 import React from 'react';
-import { SettingsButton } from './Settings/SettingsButton';
 
 interface GameOverModalProps {
   isOpen: boolean;
