@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/Snake-On-Roids/static/css/main.4f042e7c.chunk.css",
+    "main.js": "/Snake-On-Roids/static/js/main.afe1e9e6.chunk.js",
+    "main.js.map": "/Snake-On-Roids/static/js/main.afe1e9e6.chunk.js.map",
+    "runtime-main.js": "/Snake-On-Roids/static/js/runtime-main.fe143ecd.js",
+    "runtime-main.js.map": "/Snake-On-Roids/static/js/runtime-main.fe143ecd.js.map",
+    "static/js/2.19e5a568.chunk.js": "/Snake-On-Roids/static/js/2.19e5a568.chunk.js",
+    "static/js/2.19e5a568.chunk.js.map": "/Snake-On-Roids/static/js/2.19e5a568.chunk.js.map",
+    "static/js/3.918bb768.chunk.js": "/Snake-On-Roids/static/js/3.918bb768.chunk.js",
+    "static/js/3.918bb768.chunk.js.map": "/Snake-On-Roids/static/js/3.918bb768.chunk.js.map",
+    "static/js/4.52b6486e.chunk.js": "/Snake-On-Roids/static/js/4.52b6486e.chunk.js",
+    "static/js/4.52b6486e.chunk.js.map": "/Snake-On-Roids/static/js/4.52b6486e.chunk.js.map",
+    "index.html": "/Snake-On-Roids/index.html",
+    "static/css/main.4f042e7c.chunk.css.map": "/Snake-On-Roids/static/css/main.4f042e7c.chunk.css.map",
+    "static/js/2.19e5a568.chunk.js.LICENSE.txt": "/Snake-On-Roids/static/js/2.19e5a568.chunk.js.LICENSE.txt",
+    "static/js/3.918bb768.chunk.js.LICENSE.txt": "/Snake-On-Roids/static/js/3.918bb768.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.fe143ecd.js",
+    "static/js/2.19e5a568.chunk.js",
+    "static/css/main.4f042e7c.chunk.css",
+    "static/js/main.afe1e9e6.chunk.js"
+  ]
+}
