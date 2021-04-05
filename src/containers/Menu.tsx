@@ -42,7 +42,7 @@ export const Menu: React.FC<MenuProps> = React.memo(({ onPlayGame }) => {
       p={10}
       bg='primary.main'
       zIndex={1}
-      w='80%'
+      w='90%'
       maxW='450px'
     >
       <Heading textAlign='center' mb={14}>

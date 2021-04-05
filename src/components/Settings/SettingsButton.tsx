@@ -15,7 +15,7 @@ export const SettingsButton: React.FC<SettingsButtonProps> = ({
   return (
     <Button
       bg='red.800'
-      w='25%'
+      w={{ base: '30%', lg: '25%' }}
       _hover={{ bg: 'red.700' }}
       _focus={{}}
       _active={{}}

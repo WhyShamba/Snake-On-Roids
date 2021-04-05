@@ -8,6 +8,7 @@ import Game from './containers/Game';
 import { Menu } from './containers/Menu';
 import { MainContext } from './context';
 import { createBoard } from './utils/createBoard';
+import './App.css';
 
 type SettingsType = {
   boardSize: number;
@@ -80,7 +81,6 @@ function App() {
 
   let component = <Menu onPlayGame={() => setPlayGame(true)} />;
   if (playGame) {
-    // TODO: Add the new ctx things into the gameitself
     component = <Game />;
   }
 
@@ -91,6 +91,7 @@ function App() {
         btnRef={playBtnRef}
         handleSound={handleSound}
         isPlaying={isPlaying}
+        playGame={playGame}
       />
       <MainContext.Provider
         value={{

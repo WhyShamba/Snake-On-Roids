@@ -11,8 +11,8 @@ interface EffectProps {
 
 export const Effect: React.FC<EffectProps> = ({ food, rules }) => {
   const image = foodPicker(food, {
-    w: '100px',
-    h: '100px',
+    w: { base: '50px', lg: '100px' },
+    h: { base: '50px', lg: '100px' },
   });
   return (
     <Flex alignItems='center'>

@@ -6,21 +6,31 @@ interface MainButtonsProps {
   handleSound: any;
   btnRef: any;
   isPlaying: boolean;
+  playGame: boolean;
 }
 
 export const MainButtons: React.FC<MainButtonsProps> = ({
   isPlaying,
   btnRef,
   handleSound,
+  playGame,
 }) => {
   return (
-    <HStack pos='absolute' left={6} bottom={6}>
+    <HStack
+      pos='absolute'
+      left={{ base: 'unset', lg: 6 }}
+      bottom={{ base: 'unset', lg: 6 }}
+      top={{ base: 2, lg: 'unset' }}
+      right={{ base: 2, lg: 'unset' }}
+      className={playGame ? 'main-buttons' : ''}
+      zIndex={2}
+    >
       <IconButton
         aria-label='leaderboard'
         icon={<BsBellFill />}
         variant='ghost'
         size='lg'
-        fontSize='37px'
+        fontSize={{ lg: '37px', base: '29px' }}
         // disabled
         onClick={handleSound}
         ref={btnRef}
@@ -37,7 +47,7 @@ export const MainButtons: React.FC<MainButtonsProps> = ({
         icon={<BsTrophy />}
         variant='ghost'
         size='lg'
-        fontSize='40px'
+        fontSize={{ lg: '40px', base: '33px' }}
         disabled
         _hover={{
           bg: 'none',

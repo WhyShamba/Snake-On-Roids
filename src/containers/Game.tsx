@@ -350,22 +350,29 @@ const Game = () => {
 
   return (
     <>
+      <AvatarBar
+        effects={effectsArr}
+        score={score}
+        untilNextFood={foodDuration}
+      />
       <Flex
         direction='column'
         align='center'
         boxShadow='lg'
         borderRadius='md'
         border='1px solid #ffffff0a'
-        p={10}
+        p={{ base: 2, lg: 10 }}
+        w={{ base: '95%', lg: 'auto' }}
         bg='primary.main'
         zIndex={1}
+        className='parent-board'
       >
-        <AvatarBar
-          effects={effectsArr}
-          score={score}
-          untilNextFood={foodDuration}
-        />
-        <Box outline='2px solid white' outlineColor='#2f2828' w='550px'>
+        <Box
+          outline='2px solid white'
+          outlineColor='#2f2828'
+          w={{ base: '95%', lg: '550px' }}
+          className='board'
+        >
           {board.map((row, index) => (
             <Flex key={index}>
               {row.map((cell) => {
@@ -425,15 +432,13 @@ const Game = () => {
             </Flex>
           ))}
         </Box>
-        {!disableController && (
-          <Controller
-            changeDirection={(_direction: DIRECTION) =>
-              setDirection(_direction)
-            }
-            currentDirection={direction}
-          />
-        )}
       </Flex>
+      {!disableController && (
+        <Controller
+          changeDirection={(_direction: DIRECTION) => setDirection(_direction)}
+          currentDirection={direction}
+        />
+      )}
       <GameOverModal
         isOpen={gameOver}
         onClose={closeModal}

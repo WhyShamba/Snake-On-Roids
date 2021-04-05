@@ -25,15 +25,16 @@ export const AvatarBar: React.FC<AvatarBarProps> = ({
   score,
 }) => {
   return (
-    <Box pos='absolute' left={1} top={4} h='110px'>
+    <Box pos='absolute' left={1} top={4} h='110px' zIndex={2}>
       <Flex
-        w='300px'
+        w={{ base: '200px', lg: '350px' }}
         align='center'
         bg='blackAlpha.500'
         p={2}
         borderRadius='md'
         boxShadow='md'
         mb={2}
+        fontSize={{ lg: '1rem', base: '0.8rem' }}
       >
         <Avatar size='lg' name='Snake Avatar' src='/img/avatar.png' mr={2} />
         <VStack w='100%'>

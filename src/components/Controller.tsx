@@ -18,16 +18,23 @@ export const Controller: React.FC<ControllerProps> = ({
   currentDirection,
 }) => {
   return (
-    <Box pos='absolute' right={14} bottom={14}>
+    <Box
+      pos='absolute'
+      right={{ lg: 14, base: 0 }}
+      bottom={{ lg: 14, base: 12 }}
+      left={{ lg: 'unset', base: 0 }}
+      className='controller'
+    >
       <Box
         pos='relative'
         bg='primary.main'
         boxShadow='xl'
         border='1px solid white'
         borderColor='primary.borderColor'
-        w='250px'
-        h='120px'
+        w={{ base: '150px', lg: '250px' }}
+        h={{ base: '70px', lg: '120px' }}
         borderRadius='full'
+        m='auto'
       >
         {[
           {
@@ -58,25 +65,25 @@ export const Controller: React.FC<ControllerProps> = ({
               d='flex'
               justify='center'
               align='center'
-              fontSize='4rem'
+              fontSize={{ base: '9vw', lg: '4rem' }}
               pos='absolute'
               bg='primary.main'
               border='1px solid white'
               userSelect='none'
               cursor='pointer'
               borderRadius='full'
-              w='100px'
-              h='100px'
+              w={{ base: '70px', lg: '100px' }}
+              h={{ base: '70px', lg: '100px' }}
               margin='auto'
               _odd={{
-                left: index === 0 ? -12 : 'auto',
-                right: index === 2 ? -12 : 'auto',
+                left: index === 0 ? { lg: -12, base: -9 } : 'auto',
+                right: index === 2 ? { lg: -12, base: -9 } : 'auto',
                 bottom: 0,
                 top: 0,
               }}
               _even={{
-                top: index === 1 ? -12 : 'auto',
-                bottom: index === 3 ? -12 : 'auto',
+                top: index === 1 ? { lg: -12, base: -10 } : 'auto',
+                bottom: index === 3 ? { lg: -12, base: -10 } : 'auto',
                 left: 0,
                 right: 0,
               }}

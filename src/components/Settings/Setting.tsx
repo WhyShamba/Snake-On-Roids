@@ -10,7 +10,7 @@ export const Setting: React.FC<SettingProps> = ({ settingName, children }) => {
   return (
     <Flex flexDir='column' p={2} pb={4} mb={4}>
       <Text
-        fontSize='xl'
+        fontSize={{ base: 'lg', lg: 'xl' }}
         fontWeight='bold'
         mb={4}
         textAlign='center'
@@ -21,7 +21,7 @@ export const Setting: React.FC<SettingProps> = ({ settingName, children }) => {
       <HStack
         w='100%'
         justify='center'
-        spacing={8}
+        spacing={{ base: 2, lg: 8 }}
         boxShadow='inner'
         border='1px solid '
         borderColor='primary.borderColor'
