@@ -1,4 +1,5 @@
 import { Box, BoxProps } from '@chakra-ui/layout';
+import { Image } from '@chakra-ui/react';
 import React from 'react';
 import { DIRECTION } from '../../containers/Game';
 
@@ -43,7 +44,7 @@ export const TailCell: React.FC<TailCellProps> = ({
 
   return (
     <Box w='100%' h='100%' bg='green.500' {...style}>
-      tail
+      {/* <Image src='/snake/tail.png' /> */}
     </Box>
   );
 };

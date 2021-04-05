@@ -1,5 +1,5 @@
 // miliseconds
-export const SNAKE_SPEED = 750;
+export const SNAKE_SPEED = 550;
 export const SNAKE_SPEED_MEDIUM = SNAKE_SPEED * 0.8;
 export const SNAKE_SPEED_HIGH = SNAKE_SPEED * 0.6;
 export const SNAKE_SPEED_ON_ROIDS = SNAKE_SPEED * 0.5;

@@ -238,9 +238,9 @@ const Game = () => {
 
       // For roid effect
       if (steroidConsumedRef.current && snakeCells.size > 1) {
-        console.log(
-          `Mssg to display: You haven't consumed steroids in the last 30 sec, you will shrink`
-        );
+        // console.log(
+        //   `Mssg to display: You haven't consumed steroids in the last 30 sec, you will shrink`
+        // );
         const newSnakeCells = new Set(snakeCells);
 
         const removeCellsNumber =

@@ -49,6 +49,9 @@
 
 [] Add X style to effects that don't work because steroid effect > creatine effect
 
+[] Optimize game
+    [] Try using useRef more then useState in some cases so i reduce the renders number
+
 [] Future
     [] Add sound
         [x] Main Sound
@@ -63,5 +66,5 @@
     [] Make it multiplayer
 
 [] Bugs
-    [] If snake is going right and up/down then left is clicked it will cancel game -> gameOver. That happens because the check is not correct inside useMovement and in my opinion the direction should be handles with useRef
+    [x] If snake is going right and up/down then left is clicked it will cancel game -> gameOver. That happens because the check is not correct inside useMovement and in my opinion the direction should be handles with useRef
     [] Because im using Set instead of Array when tail colapses inside snake body (because it grows) it leaves empty space. This can be fixed by adding some kind of queue mechanism that on every move forward will check if it needs to grow for a field or not. This can be done with the help of useEffect, and on every check it will see if there are rows to be added onto snakeCells set one by one.
