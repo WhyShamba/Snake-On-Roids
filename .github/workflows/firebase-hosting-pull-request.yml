@@ -2,7 +2,12 @@
 # https://github.com/firebase/firebase-tools
 
 name: Deploy to Firebase Hosting on PR
-'on': pull_request
+on:
+  push:
+    paths:
+      - "src/**"
+      - "public/**"
+
 jobs:
   build_and_preview:
     runs-on: ubuntu-latest
@@ -11,8 +16,8 @@ jobs:
       - run: npm run predeploy
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SNAKE_ON_ROIDS }}'
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_SNAKE_ON_ROIDS }}"
           projectId: snake-on-roids
         env:
           FIREBASE_CLI_PREVIEWS: hostingchannels
