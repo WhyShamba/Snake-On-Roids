@@ -47,7 +47,7 @@ export const MenuModal: React.FC<MenuModalProps> = ({
         <ModalCloseButton _active={{}} _focus={{}} />
 
         <ModalBody
-          px={{ base: 0, lg: 6 }}
+          px={{ base: 3, lg: 6 }}
           css={`
             ::-webkit-scrollbar-track {
               -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
