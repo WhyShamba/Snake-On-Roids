@@ -65,7 +65,8 @@ const Game = () => {
     new Set([snakeRef.current.head?.data?.value || 1])
   );
   const { direction, setDirection, snakeCellsSizeRef } = useSnakeMovement(
-    snakeRef.current.head!.data!.direction
+    snakeRef.current.head!.data!.direction,
+    snakeRef.current
   );
   // TODO: maybe remove setscore since this is equal to snakeCells.size - 1 and snakeCellsRef - 1, and it causes unecessery render
   const [score, setScore] = useState(0);

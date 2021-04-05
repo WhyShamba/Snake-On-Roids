@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { DIRECTION } from '../containers/Game';
+import { CellData, DIRECTION } from '../containers/Game';
+import { SingleLinkedList } from '../utils/SingleLinkedList';
 import { getOppositeDirection } from '../utils/snake/snake-coordination';
 
-export const useSnakeMovement = (initialDirection: DIRECTION) => {
+export const useSnakeMovement = (
+  initialDirection: DIRECTION,
+  snake: SingleLinkedList<CellData>
+) => {
   const [direction, setDirection] = useState<DIRECTION>(initialDirection);
-  const directionRef = useRef<DIRECTION>(initialDirection);
+  const prevDirectionRef = useRef<DIRECTION>(initialDirection);
   const snakeCellsSizeRef = useRef<number>(1);
 
   useEffect(() => {
@@ -32,13 +36,13 @@ export const useSnakeMovement = (initialDirection: DIRECTION) => {
   const _setDirection = (_direction: DIRECTION, withCheck = true) => {
     // Handles the case where if snake length is 2, and snake is moving to left, and user decides/misclicks to go opposite -> right, then the game will end and that should not happen
     if (
-      directionRef.current === getOppositeDirection(_direction) &&
       snakeCellsSizeRef.current > 1 &&
+      _direction === getOppositeDirection(snake.head!.data!.direction) &&
       withCheck
     )
       return;
 
-    directionRef.current = _direction;
+    prevDirectionRef.current = _direction;
     setDirection(_direction);
   };
 
