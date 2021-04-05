@@ -68,8 +68,6 @@ const Game = () => {
     snakeRef.current.head!.data!.direction,
     snakeRef.current
   );
-  // TODO: maybe remove setscore since this is equal to snakeCells.size - 1 and snakeCellsRef - 1, and it causes unecessery render
-  const [score, setScore] = useState(0);
   const [foodCell, setFoodCell] = useState({
     value: getFoodCell(board),
     food: getFoodType(),
@@ -79,21 +77,12 @@ const Game = () => {
     count: steroidEffectDuration,
     resetCount: resetSteroidEffectDuration,
     cancelCountdown: cancelSteroidEffectDuration,
-    // TODO: onSteroidEffectOver
-  } = useCountdown(0, removeCells);
+  } = useCountdown(0, onSteroidEffectOver);
   const {
     count: creatineEffectDuration,
     resetCount: resetCreatineEffectDuration,
     cancelCountdown: cancelCreatineEffectDuration,
-  } = useCountdown(0, () => {
-    delete effects.current['creatine'];
-
-    // TODO: onCreatineEffectOver
-    if (!steroidConsumedRef.current && !gameOver) {
-      // Side effects for creatine
-      reverseSnake();
-    }
-  });
+  } = useCountdown(0, onCreatineEffectOver);
   const {
     isOpen: gameOver,
     onOpen: openModal,
@@ -232,30 +221,18 @@ const Game = () => {
     }
   }
 
-  function removeCells() {
-    if (!gameOver) {
-      delete effects.current['steroid'];
+  function removeCells(count: number) {
+    const newSnakeCells = new Set(snakeCells);
 
-      // For roid effect
-      if (steroidConsumedRef.current && snakeCells.size > 1) {
-        // console.log(
-        //   `Mssg to display: You haven't consumed steroids in the last 30 sec, you will shrink`
-        // );
-        const newSnakeCells = new Set(snakeCells);
-
-        const removeCellsNumber =
-          newSnakeCells.size - 3 > 1 ? newSnakeCells.size - 3 : 1;
-        while (newSnakeCells.size !== removeCellsNumber) {
-          const removedTail = snake.deque();
-          newSnakeCells.delete(removedTail!.data!.value);
-        }
-
-        setScore(newSnakeCells.size - 1);
-
-        steroidConsumedRef.current = false;
-        setSnakeCells(newSnakeCells);
-      }
+    const removeCellsNumber =
+      newSnakeCells.size - count > 1 ? newSnakeCells.size - count : 1;
+    while (newSnakeCells.size !== removeCellsNumber) {
+      const removedTail = snake.deque();
+      newSnakeCells.delete(removedTail!.data!.value);
     }
+
+    steroidConsumedRef.current = false;
+    setSnakeCells(newSnakeCells);
   }
 
   function growSnake(newSnakeCells: Set<number>) {
@@ -284,7 +261,6 @@ const Game = () => {
       effects.current[foodCell.food] = Infinity;
 
       snakeFoodConsumed.current = 'protein';
-      setScore(score + 1);
     } else if (foodCell.food === 'creatine') {
       growSnake(newSnakeCells);
 
@@ -298,7 +274,6 @@ const Game = () => {
       }
 
       snakeFoodConsumed.current = 'creatine';
-      setScore(score + 1);
     } else if (foodCell.food === 'steroid') {
       for (let index = 0; index < 2; index++) {
         growSnake(newSnakeCells);
@@ -307,8 +282,6 @@ const Game = () => {
       snakeFoodConsumed.current = 'steroid';
       steroidConsumedRef.current = true;
       resetSteroidEffectDuration(STEROID_EFFECT_DURATION);
-
-      setScore(score + 2);
     }
 
     resetFoodDuration();
@@ -333,12 +306,35 @@ const Game = () => {
     snakeFoodConsumed.current = undefined;
 
     setDirection(generateRandomNum(0, 3));
-    setScore(0);
 
     resetFoodDuration();
 
     closeModal();
   };
+
+  function onCreatineEffectOver() {
+    delete effects.current['creatine'];
+
+    // TODO: onCreatineEffectOver
+    if (!steroidConsumedRef.current && !gameOver) {
+      // Side effects for creatine
+      reverseSnake();
+    }
+  }
+
+  function onSteroidEffectOver() {
+    if (!gameOver) {
+      delete effects.current['steroid'];
+
+      if (steroidConsumedRef.current && snakeCells.size > 1) {
+        // console.log(
+        //   `Mssg to display: You haven't consumed steroids in the last 30 sec, you will shrink`
+        // );
+
+        removeCells(3);
+      }
+    }
+  }
 
   const effectsArr: { duration: number | null; food: FoodType }[] = [];
   for (let effect in effects.current) {
@@ -347,6 +343,8 @@ const Game = () => {
       food: effect as FoodType,
     });
   }
+
+  const score = snakeCells.size - 1;
 
   return (
     <>
