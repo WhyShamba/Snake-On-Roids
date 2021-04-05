@@ -1,15 +1,4 @@
-import {
-  Box,
-  Heading,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalHeader,
-  ModalOverlay,
-  Text,
-  VStack,
-} from '@chakra-ui/react';
+import { Box, Heading, Text, VStack } from '@chakra-ui/react';
 import React from 'react';
 import {
   CREATINE_EFFECT_DURATION,

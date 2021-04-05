@@ -8,9 +8,9 @@ export const useSnakeMovement = (
   snake: SingleLinkedList<CellData>
 ) => {
   const [direction, setDirection] = useState<DIRECTION>(initialDirection);
-  const prevDirectionRef = useRef<DIRECTION>(initialDirection);
   const snakeCellsSizeRef = useRef<number>(1);
 
+  /* eslint-disable */
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent): void => {
       const key = e.key.toLocaleLowerCase();
@@ -42,7 +42,6 @@ export const useSnakeMovement = (
     )
       return;
 
-    prevDirectionRef.current = _direction;
     setDirection(_direction);
   };
 

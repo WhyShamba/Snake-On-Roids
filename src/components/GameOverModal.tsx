@@ -42,6 +42,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         boxShadow='lg'
         borderRadius='md'
         border='1px solid #ffffff0a'
+        w='90%'
       >
         <ModalHeader textAlign='center' fontSize='3xl'>
           Game Over

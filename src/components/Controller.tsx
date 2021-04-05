@@ -24,6 +24,7 @@ export const Controller: React.FC<ControllerProps> = ({
       bottom={{ lg: 14, base: 12 }}
       left={{ lg: 'unset', base: 0 }}
       className='controller'
+      zIndex={2}
     >
       <Box
         pos='relative'
@@ -94,6 +95,7 @@ export const Controller: React.FC<ControllerProps> = ({
               _focus={{}}
               _active={{}}
               onClick={() => changeDirection(arrow.direction)}
+              opacity='0.7'
               {...activeStyle}
             >
               {arrow.arrow}

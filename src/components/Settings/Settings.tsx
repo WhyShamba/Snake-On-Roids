@@ -1,12 +1,6 @@
 import {
   Box,
   Image,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalHeader,
-  ModalOverlay,
   Slider,
   SliderFilledTrack,
   SliderThumb,

@@ -370,7 +370,7 @@ const Game = () => {
         <Box
           outline='2px solid white'
           outlineColor='#2f2828'
-          w={{ base: '95%', lg: '550px' }}
+          w={{ base: '100%', lg: '550px' }}
           className='board'
         >
           {board.map((row, index) => (
@@ -419,7 +419,7 @@ const Game = () => {
 
                 return (
                   <Box
-                    h={cellRef.current?.clientWidth}
+                    h={`${cellRef.current?.clientWidth}px`}
                     ref={cellRef}
                     flex={1}
                     outline='1px solid #2f2828'

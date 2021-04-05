@@ -33,7 +33,7 @@
   }
 }
 
-@media (orientation: landscape) and (max-height: 320px) {
+@media (orientation: landscape) and (max-height: 420px) {
   .main-buttons {
     flex-direction: column !important;
     align-items: flex-start !important;
@@ -46,5 +46,9 @@
   .main-buttons > button:last-child {
     margin-left: 0 !important;
     margin-top: 5px !important;
+  }
+
+  .controller > div > button {
+    font-size: 6vw !important;
   }
 }
