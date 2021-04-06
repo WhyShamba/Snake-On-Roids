@@ -1,7 +1,7 @@
-import { Button } from '@chakra-ui/react';
+import { Button, ButtonProps } from '@chakra-ui/react';
 import React from 'react';
 
-interface SettingsButtonProps {
+interface SettingsButtonProps extends ButtonProps {
   children: string;
   onClick?: any;
   isActive?: boolean;
@@ -11,6 +11,7 @@ export const SettingsButton: React.FC<SettingsButtonProps> = ({
   children,
   onClick,
   isActive,
+  ...rest
 }) => {
   return (
     <Button
@@ -21,6 +22,7 @@ export const SettingsButton: React.FC<SettingsButtonProps> = ({
       _active={{}}
       onClick={onClick}
       border={isActive ? '1px solid white' : undefined}
+      {...rest}
     >
       {children}
     </Button>

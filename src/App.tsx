@@ -8,7 +8,12 @@ import Game from './containers/Game';
 import { Menu } from './containers/Menu';
 import { MainContext } from './context';
 import { createBoard } from './utils/createBoard';
+import Peer from 'peerjs';
 import './App.css';
+import { idText } from 'typescript';
+import { Multiplayer } from './components/Multiplayer/Multiplayer';
+import MultiplayerGame from './containers/Multiplayer/MultiplayerGame';
+import MultiplayerWrapper from './containers/Multiplayer/MultiplayerWrapper';
 
 type SettingsType = {
   boardSize: number;
@@ -16,6 +21,12 @@ type SettingsType = {
   musicVolume: number;
   disableController: boolean;
   mute: boolean;
+};
+
+export type MultiplayerSettingsType = {
+  peer: Peer;
+  peerId: string;
+  connectionPeerId?: string;
 };
 
 function App() {
@@ -39,6 +50,9 @@ function App() {
     volume: 0.1,
   });
   const playBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [multiplayerSettings, setMultiplayerSettings] = useState<
+    MultiplayerSettingsType | undefined
+  >();
 
   /* eslint-disable */
   useEffect(() => {
@@ -79,9 +93,36 @@ function App() {
     }
   };
 
-  let component = <Menu onPlayGame={() => setPlayGame(true)} />;
+  const handleMultiplayer = (connectionPeerId?: string) => {
+    const peer = new Peer();
+
+    peer.on('open', function (id) {
+      console.log('My peer ID is: ' + id);
+      setMultiplayerSettings({
+        peer,
+        peerId: id,
+        // This field determines whenever the user creates or joins a game
+        connectionPeerId:
+          typeof connectionPeerId === 'string' ? connectionPeerId : undefined,
+      });
+    });
+  };
+
+  let component = (
+    <Menu
+      onPlayGame={() => setPlayGame(true)}
+      handleMultiplayer={handleMultiplayer}
+    />
+  );
   if (playGame) {
     component = <Game />;
+  } else if (multiplayerSettings) {
+    component = (
+      <MultiplayerWrapper
+        {...multiplayerSettings}
+        cancelGame={() => setMultiplayerSettings(undefined)}
+      />
+    );
   }
 
   return (
