@@ -10,9 +10,6 @@ import { MainContext } from './context';
 import { createBoard } from './utils/createBoard';
 import Peer from 'peerjs';
 import './App.css';
-import { idText } from 'typescript';
-import { Multiplayer } from './components/Multiplayer/Multiplayer';
-import MultiplayerGame from './containers/Multiplayer/MultiplayerGame';
 import MultiplayerWrapper from './containers/Multiplayer/MultiplayerWrapper';
 
 type SettingsType = {
@@ -97,7 +94,7 @@ function App() {
     const peer = new Peer();
 
     peer.on('open', function (id) {
-      console.log('My peer ID is: ' + id);
+      console.log('App.tsx: My peer ID is: ' + id);
       setMultiplayerSettings({
         peer,
         peerId: id,

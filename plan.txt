@@ -60,7 +60,7 @@
         [] Add roid consumed sound
         [] Add creatine, protein consumed sound
         [] Add meat consumed sound
-    [] Make responsive
+    [x] Make responsive
     [] Implement some kind of max score 
     [] Add leaderboard, probably using firebase
     [] Make it multiplayer
