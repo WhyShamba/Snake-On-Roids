@@ -21,3 +21,7 @@ Future (idea for multiplayer):
 
 - WebRTC/peerjs (p2p) or Socket.io (must use server) or http relay(mimics sockets but uses http protocol to send data)
 - Firebase RealTime Database (for saving highest score and/or might use it for multiplayer functionality)
+
+Multiplayer:
+
+- Created with WebRTC using peerjs and peerjs's STUN server, instead of setting up my own env

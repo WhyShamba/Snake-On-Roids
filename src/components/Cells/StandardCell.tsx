@@ -1,9 +1,9 @@
 import { Box, BoxProps } from '@chakra-ui/react';
 import React from 'react';
-import { DIRECTION } from '../../containers/Game';
+import { DIRECTION } from '../../types/types';
 import { createRotationStyle } from './TailCell';
 
-interface StandardCellProps {
+interface StandardCellProps extends BoxProps {
   direction?: DIRECTION;
   nextDirection?: DIRECTION;
   isTransitional?: boolean;
@@ -13,6 +13,7 @@ export const StandardCell: React.FC<StandardCellProps> = ({
   isTransitional,
   direction,
   nextDirection,
+  ...rest
 }) => {
   const style: BoxProps = {};
 
@@ -62,5 +63,5 @@ export const StandardCell: React.FC<StandardCellProps> = ({
     }
   }
 
-  return <Box w='100%' h='100%' bg='green.500' {...style}></Box>;
+  return <Box w='100%' h='100%' bg='green.500' {...style} {...rest}></Box>;
 };

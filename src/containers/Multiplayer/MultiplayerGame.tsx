@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useDisclosure } from '@chakra-ui/react';
+import Peer from 'peerjs';
 import React, {
   useCallback,
   useContext,
@@ -7,43 +8,55 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { AvatarBar } from '../components/AvatarBar';
-import { Controller } from '../components/Controller';
-import { GameOverModal } from '../components/GameOverModal';
+import { AvatarBar } from '../../components/AvatarBar';
+import { Controller } from '../../components/Controller';
+import { GameOverModalMultiplayer } from '../../components/Multiplayer/GameOverModalMultiplayer';
 import {
   CREATINE_EFFECT_DURATION,
   FOOD_DURATION,
   STEROID_EFFECT_DURATION,
-} from '../consts';
-import { MainContext } from '../context';
-import { useCountdown } from '../custom-hooks/useCountdown';
-import { useSetInterval } from '../custom-hooks/useSetInterval';
-import { useSnakeMovement } from '../custom-hooks/useSnakeMovement';
-import { generateRandomNum } from '../utils/generateRandomNum';
-import { Node, SingleLinkedList } from '../utils/SingleLinkedList';
+} from '../../consts';
+import { MainContext } from '../../context';
+import { useCountdown } from '../../custom-hooks/useCountdown';
+import { useSetInterval } from '../../custom-hooks/useSetInterval';
+import { useSnakeMovement } from '../../custom-hooks/useSnakeMovement';
+import { generateRandomNum } from '../../utils/generateRandomNum';
+import { Node, SingleLinkedList } from '../../utils/SingleLinkedList';
 import {
   getSnakeSpeedOnCreatine,
   getSnakeSpeedOnRoids,
-} from '../utils/snake/calculateSnakeSpeed';
+} from '../../utils/snake/calculateSnakeSpeed';
 import {
   getFoodCell,
   getFoodType,
   getInitialSnakeCell,
-} from '../utils/snake/initializers';
+} from '../../utils/snake/initializers';
 import {
   changeDirection,
   getNextNodeForDirection,
   getOppositeDirection,
-} from '../utils/snake/snake-coordination';
-import Board from '../components/Board';
-import { FoodType, DIRECTION } from '../types/types';
-const Game = () => {
+} from '../../utils/snake/snake-coordination';
+import MultiplayerBoard from '../../components/Multiplayer/MultiplayerBoard';
+import {
+  CellData,
+  DataType,
+  DIRECTION,
+  FoodType,
+  MoveSnakeDataType,
+} from '../../types/types';
+
+const MultiplayerGame: React.FC<{
+  connection: Peer.DataConnection;
+  startGame: boolean;
+  activateInitialGetReadyModal: () => any;
+}> = ({ connection, startGame, activateInitialGetReadyModal }) => {
   // Global game settings
   const {
     togglePlayGame,
     snakeSpeed: initialSnakeSpeed,
     disableController,
     board,
+    setBoardSettings,
   } = useContext(MainContext);
   const snakeRef = useRef(
     new SingleLinkedList(new Node(getInitialSnakeCell(board)))
@@ -69,11 +82,8 @@ const Game = () => {
     resetCount: resetCreatineEffectDuration,
     cancelCountdown: cancelCreatineEffectDuration,
   } = useCountdown(0, onCreatineEffectOver);
-  const {
-    isOpen: gameOver,
-    onOpen: openModal,
-    onClose: closeModal,
-  } = useDisclosure();
+  const [gameOver, setGameOver] = useState(true);
+  const { isOpen, onOpen: openModal, onClose: closeModal } = useDisclosure();
   const {
     count: foodDuration,
     resetCount: resetFoodDuration,
@@ -86,6 +96,16 @@ const Game = () => {
   });
   const snakeFoodConsumed = useRef<FoodType>();
   const effects = useRef<{ [food: string]: number | null }>({});
+  // Multiplayer
+  const enemyCells = useRef<Set<number> | null>(null);
+  const enemyFoodCell = useRef<typeof foodCell | null>(null);
+  const enemySnake = useRef<SingleLinkedList<CellData> | null>(null);
+  const [playerWon, setPlayerWon] = useState(false);
+  const playAgainWithPlayer = useRef<{ me: boolean; friend: boolean }>({
+    me: false,
+    friend: false,
+  });
+  const [waitingForPlayer, setWaitingForPlayer] = useState(false);
 
   let snakeSpeed = initialSnakeSpeed;
   if (steroidConsumedRef.current) {
@@ -96,6 +116,39 @@ const Game = () => {
   ) {
     snakeSpeed = getSnakeSpeedOnCreatine(snakeSpeed);
   }
+
+  // Handling the multiplayer, on data recieve
+  useEffect(() => {
+    connection.on('data', (data: DataType) => {
+      if (data === 'LOST') {
+        enemyCells.current = null;
+        setPlayerWon(true);
+        gameOverHandler();
+      } else if (data === 'PLAY_AGAIN') {
+        playAgainWithPlayer.current.friend = true;
+
+        playAgain();
+      } else {
+        if (data.type === 'SET_SETTINGS') {
+          setBoardSettings(data.boardSettings);
+        } else if (data.type === 'MOVE_SNAKE') {
+          const dataObj: MoveSnakeDataType = JSON.parse(data.payload);
+          // Set enemy data
+          // TODO: maybe these need to be with usestate
+          enemyCells.current = new Set(dataObj.cells);
+          enemyFoodCell.current = dataObj.foodCell;
+          enemySnake.current = dataObj.snake;
+        }
+      }
+    });
+  }, []);
+
+  // Used for handling counting model etc etc
+  useEffect(() => {
+    if (gameOver !== !startGame) {
+      setGameOver(!startGame);
+    }
+  }, [startGame]);
 
   useSetInterval(() => {
     if (!gameOver) moveSnake();
@@ -149,12 +202,35 @@ const Game = () => {
     return false;
   };
 
+  // Multiplayer methods
+  const sendData = (cells: Set<number>) => {
+    connection.send({
+      type: 'MOVE_SNAKE',
+      payload: JSON.stringify({
+        cells: Array.from(cells),
+        foodCell,
+        snake: snakeRef.current,
+      }),
+    });
+  };
+
+  const sendLostSignal = () => {
+    connection.send('LOST');
+  };
+
+  const sendPlayAgainSignal = () => {
+    connection.send('PLAY_AGAIN');
+  };
+
   const moveSnake = () => {
     if (!isOutOfBounds()) {
       const newNode = getNextNodeForDirection(snake.head!, direction, board);
 
       // If it's not colliding
-      if (!snakeCells.has(newNode.data!.value)) {
+      if (
+        !snakeCells.has(newNode.data!.value) &&
+        !enemyCells.current?.has(newNode.data!.value)
+      ) {
         const newSnakeCells = changeDirection(newNode, snake, snakeCells);
 
         const foodConsumed = newNode.data!.value === foodCell.value;
@@ -165,10 +241,14 @@ const Game = () => {
         snakeCellsSizeRef.current = newSnakeCells.size;
 
         setSnakeCells(newSnakeCells);
+        sendData(newSnakeCells);
       } else {
-        // oncollision
+        sendLostSignal();
         gameOverHandler();
       }
+    } else {
+      sendLostSignal();
+      gameOverHandler();
     }
   };
 
@@ -190,6 +270,7 @@ const Game = () => {
   };
 
   function gameOverHandler() {
+    setGameOver(true);
     openModal();
     cancelFoodDuration();
 
@@ -203,10 +284,6 @@ const Game = () => {
       cancelCreatineEffectDuration();
     }
 
-    // delete effects.current['steroid'];
-    // delete effects.current['creatine'];
-    // delete effects.current['meat'];
-    // delete effects.current['protein'];
     effects.current = {};
   }
 
@@ -280,28 +357,45 @@ const Game = () => {
 
   // Reset the game to initial state
   const playAgain = () => {
-    snakeRef.current = new SingleLinkedList(
-      new Node(getInitialSnakeCell(board))
-    );
+    const iWantToPlay = playAgainWithPlayer.current.me;
+    const friendWantsToPlay = playAgainWithPlayer.current.friend;
+    // If both players agree to play
+    if (iWantToPlay && friendWantsToPlay) {
+      setPlayerWon(false);
 
-    // setSnakeCells(new Set([snake.head!.data!.value]));
-    setSnakeCells(new Set([snakeRef.current.head!.data!.value]));
+      playAgainWithPlayer.current = {
+        me: false,
+        friend: false,
+      };
+      snakeRef.current = new SingleLinkedList(
+        new Node(getInitialSnakeCell(board))
+      );
+      // TODO: REFRESH ENEMY CELLS. Set em to null
+      enemyCells.current = null;
 
-    const newFoodCell = {
-      value: getFoodCell(board),
-      food: getFoodType(),
-    };
-    setFoodCell(newFoodCell);
-    snakeFoodConsumed.current = undefined;
+      // setSnakeCells(new Set([snake.head!.data!.value]));
+      setSnakeCells(new Set([snakeRef.current.head!.data!.value]));
 
-    setDirection(generateRandomNum(0, 3));
+      const newFoodCell = {
+        value: getFoodCell(board),
+        food: getFoodType(),
+      };
+      setFoodCell(newFoodCell);
+      snakeFoodConsumed.current = undefined;
 
-    resetFoodDuration();
+      setDirection(generateRandomNum(0, 3));
 
-    closeModal();
+      resetFoodDuration();
+
+      setWaitingForPlayer(false);
+
+      closeModal();
+
+      // This will refresh and activate the initial modal
+      activateInitialGetReadyModal();
+    }
   };
 
-  // Side effects that can happen
   function onCreatineEffectOver() {
     delete effects.current['creatine'];
 
@@ -334,11 +428,15 @@ const Game = () => {
         score={score}
         untilNextFood={foodDuration}
       />
-      <Board
+      {/* Need to add multiplayer, enemy cell */}
+      <MultiplayerBoard
         board={board}
         foodCell={foodCell}
+        enemyFoodCell={enemyFoodCell.current}
         snakeCells={snakeCells}
+        enemyCells={enemyCells.current}
         snakeRef={snakeRef}
+        enemySnakeRef={enemySnake}
       />
       <Controller
         changeDirection={useCallback(
@@ -348,12 +446,23 @@ const Game = () => {
         currentDirection={direction}
         disable={disableController}
       />
-      <GameOverModal
-        isOpen={gameOver}
+      <GameOverModalMultiplayer
+        isOpen={isOpen}
         onClose={closeModal}
         score={score}
-        onPlayAgain={playAgain}
+        onPlayAgain={() => {
+          playAgainWithPlayer.current.me = true;
+
+          setWaitingForPlayer(true);
+
+          // Notify other peer
+          sendPlayAgainSignal();
+
+          playAgain();
+        }}
         onMenuClick={togglePlayGame}
+        playerWon={playerWon}
+        loading={waitingForPlayer}
       />
     </>
   );
@@ -378,4 +487,4 @@ const Game = () => {
   }
 };
 
-export default Game;
+export default MultiplayerGame;

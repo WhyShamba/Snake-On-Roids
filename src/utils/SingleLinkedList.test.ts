@@ -1,4 +1,4 @@
-import { DIRECTION } from '../containers/Game';
+import { DIRECTION } from '../types/types';
 import { Node, SingleLinkedList } from './SingleLinkedList';
 import { getOppositeDirection } from './snake/snake-coordination';
 
@@ -39,7 +39,6 @@ test(`Test reverse snake method:
     const isTransitional = currentNodeDirection !== nextNodeDirection;
 
     if (isTransitional && nextNodeDirection !== undefined) {
-      console.log('Transitions for: ', currentNodeDirection, nextNodeDirection);
       reversedNode.data = getOppositeDirection(nextNodeDirection);
       transitions += 1;
     } else {

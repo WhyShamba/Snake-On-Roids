@@ -1,8 +1,8 @@
 import { Flex, UnorderedList, ListItem, Text } from '@chakra-ui/react';
 import React from 'react';
-import { FoodType } from '../../containers/Game';
 import { foodPicker } from '../../utils/foodPicker';
 import parse from 'html-react-parser';
+import { FoodType } from '../../types/types';
 
 interface EffectProps {
   food: FoodType;

@@ -8,14 +8,23 @@ import Game from './containers/Game';
 import { Menu } from './containers/Menu';
 import { MainContext } from './context';
 import { createBoard } from './utils/createBoard';
+import Peer from 'peerjs';
 import './App.css';
+import MultiplayerWrapper from './containers/Multiplayer/MultiplayerWrapper';
+import { generateId } from './utils/generateId';
 
-type SettingsType = {
+export type SettingsType = {
   boardSize: number;
   snakeSpeed: number;
   musicVolume: number;
   disableController: boolean;
   mute: boolean;
+};
+
+export type MultiplayerSettingsType = {
+  peer: Peer;
+  peerId: string;
+  connectionPeerId?: string;
 };
 
 function App() {
@@ -39,6 +48,9 @@ function App() {
     volume: 0.1,
   });
   const playBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [multiplayerSettings, setMultiplayerSettings] = useState<
+    MultiplayerSettingsType | undefined
+  >();
 
   /* eslint-disable */
   useEffect(() => {
@@ -79,9 +91,36 @@ function App() {
     }
   };
 
-  let component = <Menu onPlayGame={() => setPlayGame(true)} />;
+  const handleMultiplayer = (connectionPeerId?: string) => {
+    const peer = new Peer(generateId());
+
+    peer.on('open', function (id) {
+      setMultiplayerSettings({
+        peer,
+        peerId: id,
+        // This field determines whenever the user creates or joins a game
+        connectionPeerId:
+          typeof connectionPeerId === 'string' ? connectionPeerId : undefined,
+      });
+    });
+  };
+
+  let component = (
+    <Menu
+      onPlayGame={() => setPlayGame(true)}
+      handleMultiplayer={handleMultiplayer}
+    />
+  );
   if (playGame) {
     component = <Game />;
+  } else if (multiplayerSettings) {
+    component = (
+      <MultiplayerWrapper
+        {...multiplayerSettings}
+        cancelGame={() => setMultiplayerSettings(undefined)}
+        boardSettings={settings}
+      />
+    );
   }
 
   return (
@@ -114,6 +153,7 @@ function App() {
             }),
           toggleMute: () => setSettings({ ...settings, mute: !settings.mute }),
           togglePlayGame: () => setPlayGame(!playGame),
+          setBoardSettings: setSettings,
         }}
       >
         {component}

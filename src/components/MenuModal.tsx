@@ -9,7 +9,7 @@ import {
 import React from 'react';
 
 interface MenuModalProps {
-  onClose: () => any;
+  onClose?: () => any;
   isOpen: boolean;
   headerText: string;
   children: JSX.Element | JSX.Element[];
@@ -23,7 +23,7 @@ export const MenuModal: React.FC<MenuModalProps> = ({
 }) => {
   return (
     <Modal
-      onClose={onClose}
+      onClose={onClose ? onClose : () => {}}
       size='6xl'
       isOpen={isOpen}
       scrollBehavior='inside'
@@ -44,8 +44,7 @@ export const MenuModal: React.FC<MenuModalProps> = ({
         <ModalHeader fontSize={{ base: '2xl', lg: '3xl' }}>
           {headerText}
         </ModalHeader>
-        <ModalCloseButton _active={{}} _focus={{}} />
-
+        {onClose && <ModalCloseButton _active={{}} _focus={{}} />}
         <ModalBody
           px={{ base: 3, lg: 6 }}
           css={`

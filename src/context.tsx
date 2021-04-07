@@ -1,4 +1,5 @@
-import { createContext } from 'react';
+import { createContext, Dispatch, SetStateAction } from 'react';
+import { SettingsType } from './App';
 import { BOARD_SIZE, SNAKE_SPEED } from './consts';
 import { createBoard } from './utils/createBoard';
 
@@ -22,6 +23,8 @@ export type ContextType = {
 
   playGame: boolean;
   togglePlayGame: () => any;
+
+  setBoardSettings: Dispatch<SetStateAction<SettingsType>>;
 };
 
 export const MainContext = createContext<ContextType>({
@@ -38,4 +41,5 @@ export const MainContext = createContext<ContextType>({
   playGame: false,
   togglePlayGame: () => {},
   board: createBoard(BOARD_SIZE),
+  setBoardSettings: () => {},
 });
