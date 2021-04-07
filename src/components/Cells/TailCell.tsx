@@ -1,8 +1,8 @@
 import { Box, BoxProps } from '@chakra-ui/layout';
 import React from 'react';
-import { DIRECTION } from '../../containers/Game';
+import { DIRECTION } from '../../types/types';
 
-interface TailCellProps {
+interface TailCellProps extends BoxProps {
   direction: DIRECTION;
   nextDirection?: DIRECTION;
   isTransitional: boolean;
@@ -16,6 +16,7 @@ export const TailCell: React.FC<TailCellProps> = ({
   direction,
   nextDirection,
   isTransitional,
+  ...rest
 }) => {
   const style: BoxProps = {
     borderLeftRadius: 'full',
@@ -42,7 +43,7 @@ export const TailCell: React.FC<TailCellProps> = ({
   }
 
   return (
-    <Box w='100%' h='100%' bg='green.500' {...style}>
+    <Box w='100%' h='100%' bg='green.500' {...style} {...rest}>
       {/* <Image src='/snake/tail.png' /> */}
     </Box>
   );

@@ -8,7 +8,7 @@ import {
   Text,
 } from '@chakra-ui/react';
 import React from 'react';
-import { FoodType } from '../containers/Game';
+import { FoodType } from '../types/types';
 
 interface AvatarBarProps {
   effects: { [food: string]: number | null };

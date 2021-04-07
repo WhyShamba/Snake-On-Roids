@@ -1,9 +1,9 @@
 import { Box, BoxProps } from '@chakra-ui/layout';
 import { Image, ImageProps } from '@chakra-ui/react';
 import React from 'react';
-import { DIRECTION } from '../../containers/Game';
+import { DIRECTION } from '../../types/types';
 
-interface HeadCellProps {
+interface HeadCellProps extends BoxProps {
   direction: DIRECTION;
 }
 
@@ -11,7 +11,7 @@ const createRotationStyle = (deg: number) => {
   return `rotate(${deg}deg)`;
 };
 
-export const HeadCell: React.FC<HeadCellProps> = ({ direction }) => {
+export const HeadCell: React.FC<HeadCellProps> = ({ direction, ...rest }) => {
   const style: BoxProps = {
     borderRightRadius: '2xl',
   };
@@ -35,7 +35,7 @@ export const HeadCell: React.FC<HeadCellProps> = ({ direction }) => {
   }
 
   return (
-    <Box w='100%' h='100%' bg='green.500' {...style} pos='relative'>
+    <Box w='100%' h='100%' bg='green.500' pos='relative' {...style} {...rest}>
       {/* // TODO: Add hair */}
       <Image src='/snake/eyes.png' {...imageStyle} />
     </Box>

@@ -1,4 +1,4 @@
-import { DIRECTION, CellData } from '../../containers/Game';
+import { DIRECTION, CellData } from '../../types/types';
 import { Node, SingleLinkedList } from '../SingleLinkedList';
 
 export function getNextNodeCoordsForDirection(

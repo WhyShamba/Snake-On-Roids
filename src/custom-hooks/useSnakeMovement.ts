@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { CellData, DIRECTION } from '../containers/Game';
-import { SingleLinkedList } from '../utils/SingleLinkedList';
+import { useEffect, useRef, useState } from 'react';
+import { DIRECTION } from '../types/types';
 import { getOppositeDirection } from '../utils/snake/snake-coordination';
 
 export const useSnakeMovement = (snakeHeadDirection: DIRECTION) => {

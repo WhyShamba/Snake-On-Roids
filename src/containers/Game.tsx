@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useDisclosure } from '@chakra-ui/react';
 import React, {
   useCallback,
@@ -34,24 +35,8 @@ import {
   getNextNodeForDirection,
   getOppositeDirection,
 } from '../utils/snake/snake-coordination';
-import Board from './Board';
-
-export type FoodType = 'protein' | 'meat' | 'steroid' | 'creatine';
-export type CellData = {
-  row: number;
-  cell: number;
-  value: number;
-  direction: DIRECTION;
-};
-
-// values are 0, 1, 2, 3
-export enum DIRECTION {
-  LEFT,
-  UP,
-  RIGHT,
-  DOWN,
-}
-
+import Board from '../components/Board';
+import { FoodType, DIRECTION } from '../types/types';
 const Game = () => {
   // Global game settings
   const {

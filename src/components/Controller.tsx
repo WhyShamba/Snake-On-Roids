@@ -6,7 +6,7 @@ import {
 } from '@chakra-ui/icons';
 import { Box, Button, ButtonProps } from '@chakra-ui/react';
 import React from 'react';
-import { DIRECTION } from '../containers/Game';
+import { DIRECTION } from '../types/types';
 
 interface ControllerProps {
   changeDirection: (direction: DIRECTION) => any;
