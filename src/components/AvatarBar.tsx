@@ -11,10 +11,7 @@ import React from 'react';
 import { FoodType } from '../containers/Game';
 
 interface AvatarBarProps {
-  effects: {
-    food: FoodType;
-    duration: number | null;
-  }[];
+  effects: { [food: string]: number | null };
   score: number;
   untilNextFood: number;
 }
@@ -24,6 +21,14 @@ export const AvatarBar: React.FC<AvatarBarProps> = ({
   untilNextFood,
   score,
 }) => {
+  const effectsArr: { duration: number | null; food: FoodType }[] = [];
+  for (let effect in effects) {
+    effectsArr.push({
+      duration: (effects as any)[effect] as number | null,
+      food: effect as FoodType,
+    });
+  }
+
   return (
     <Box pos='absolute' left={1} top={4} h='110px' zIndex={2}>
       <Flex
@@ -53,7 +58,7 @@ export const AvatarBar: React.FC<AvatarBarProps> = ({
         </VStack>
       </Flex>
       <HStack pl={'28%'} spacing={3}>
-        {effects.map((effect) => {
+        {effectsArr.map((effect) => {
           let imageSrc = '/img/';
           switch (effect.food) {
             case 'steroid':
