@@ -45,12 +45,12 @@
 
 [x] Add board/snake speed functionality to game
 
-[] Clean code
+[x] Clean code
 
 [] Add X style to effects that don't work because steroid effect > creatine effect
 
-[] Optimize game
-    [] Try using useRef more then useState in some cases so i reduce the renders number
+[x] Optimize game
+    [x] Try using useRef more then useState in some cases so i reduce the renders number
 
 [] Future
     [] Add sound
@@ -63,7 +63,7 @@
     [x] Make responsive
     [] Implement some kind of max score 
     [] Add leaderboard, probably using firebase
-    [] Make it multiplayer
+    [x] Make it multiplayer
 
 [] Bugs
     [x] If snake is going right and up/down then left is clicked it will cancel game -> gameOver. That happens because the check is not correct inside useMovement and in my opinion the direction should be handles with useRef
