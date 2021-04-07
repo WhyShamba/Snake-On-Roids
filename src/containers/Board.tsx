@@ -6,8 +6,7 @@ import { HeadCell } from '../components/Cells/HeadCell';
 import { StandardCell } from '../components/Cells/StandardCell';
 import { TailCell } from '../components/Cells/TailCell';
 import { SingleLinkedList } from '../utils/SingleLinkedList';
-import { CellData } from './Game';
-import { FoodType } from './Multiplayer/MultiplayerWrapper';
+import { CellData, FoodType } from './Game';
 
 interface BoardProps {
   board: number[][];
