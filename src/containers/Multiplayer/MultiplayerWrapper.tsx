@@ -1,80 +1,40 @@
-import { Box, Flex } from '@chakra-ui/layout';
-import { useDisclosure, Text } from '@chakra-ui/react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { Text, useDisclosure } from '@chakra-ui/react';
 import Peer from 'peerjs';
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { MultiplayerSettingsType } from '../../App';
-import { AvatarBar } from '../../components/AvatarBar';
-import { FoodCell } from '../../components/Cells/FoodCell';
-import { HeadCell } from '../../components/Cells/HeadCell';
-import { StandardCell } from '../../components/Cells/StandardCell';
-import { TailCell } from '../../components/Cells/TailCell';
-import { Controller } from '../../components/Controller';
-import { GameOverModal } from '../../components/GameOverModal';
+import React, { useEffect, useState } from 'react';
+import { MultiplayerSettingsType, SettingsType } from '../../App';
 import { MenuModal } from '../../components/MenuModal';
 import { GetReadyModal } from '../../components/Multiplayer/GetReadyModal';
-import {
-  CREATINE_EFFECT_DURATION,
-  FOOD_DURATION,
-  STEROID_EFFECT_DURATION,
-} from '../../consts';
-import { MainContext } from '../../context';
 import { useCountdown } from '../../custom-hooks/useCountdown';
-import { useSetInterval } from '../../custom-hooks/useSetInterval';
-import { useSnakeMovement } from '../../custom-hooks/useSnakeMovement';
-import { generateRandomNum } from '../../utils/generateRandomNum';
-import { Node, SingleLinkedList } from '../../utils/SingleLinkedList';
-import {
-  getSnakeSpeedOnCreatine,
-  getSnakeSpeedOnRoids,
-} from '../../utils/snake/calculateSnakeSpeed';
-import {
-  getFoodCell,
-  getFoodType,
-  getInitialSnakeCell,
-} from '../../utils/snake/initializers';
-import {
-  changeDirection,
-  getNextNodeForDirection,
-  getOppositeDirection,
-} from '../../utils/snake/snake-coordination';
 import MultiplayerGame from './MultiplayerGame';
 
-export type FoodType = 'protein' | 'meat' | 'steroid' | 'creatine';
-export type CellData = {
-  row: number;
-  cell: number;
-  value: number;
-  direction: DIRECTION;
-};
-
-// values are 0, 1, 2, 3
-export enum DIRECTION {
-  LEFT,
-  UP,
-  RIGHT,
-  DOWN,
-}
-
 const MultiplayerWrapper: React.FC<
-  MultiplayerSettingsType & { cancelGame: () => any }
-> = ({ peer, peerId, connectionPeerId, cancelGame }) => {
+  MultiplayerSettingsType & {
+    cancelGame: () => any;
+    boardSettings: SettingsType;
+  }
+> = ({ peer, peerId, connectionPeerId, cancelGame, boardSettings }) => {
   const [connection, setConnection] = useState<null | Peer.DataConnection>(
     null
   );
   const { isOpen, onClose, onOpen } = useDisclosure();
   const { count, resetCount } = useCountdown(3, onClose);
 
-  console.log('Connection peer id: ', connectionPeerId);
   const isCreator = !connectionPeerId;
-  // If he presses join game
   useEffect(() => {
     if (isCreator) {
       peer.on('connection', (conn) => {
-        setConnection(conn);
-        //   Open the modal
-        activateInitialGetReadyModal();
+        conn.on('open', () => {
+          setConnection(conn);
+          // Open the modal
+          activateInitialGetReadyModal();
+
+          // Send the board settings
+          conn.send({ type: 'SET_SETTINGS', boardSettings });
+        });
       });
     } else {
+      // If user presses join game
       const conn = peer.connect(connectionPeerId!);
       conn.on('open', () => {
         setConnection(conn);

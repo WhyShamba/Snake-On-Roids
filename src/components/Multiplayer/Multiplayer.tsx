@@ -1,5 +1,4 @@
 import {
-  Button,
   FormControl,
   FormLabel,
   Input,
@@ -9,7 +8,7 @@ import {
   TabPanels,
   Tabs,
 } from '@chakra-ui/react';
-import React, { useContext, useRef, useState } from 'react';
+import React, { useContext, useRef } from 'react';
 import {
   BOARD_SIZE,
   BOARD_SIZE_HIGH,
@@ -113,7 +112,7 @@ export const Multiplayer: React.FC<MultiplayerProps> = ({
           <TabPanel h='464px' p={{ base: 0, lg: 4 }} pt={7}>
             <FormControl>
               <FormLabel>Invitation Key</FormLabel>
-              <Input type='text' ref={inputRef} />
+              <Input type='text' ref={inputRef} autoComplete='off' />
             </FormControl>
             <SettingsButton
               w='100%'

@@ -1,7 +1,4 @@
-import { RepeatIcon } from '@chakra-ui/icons';
 import {
-  Button,
-  Flex,
   Modal,
   ModalBody,
   ModalContent,
