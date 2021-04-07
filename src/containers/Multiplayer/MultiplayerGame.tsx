@@ -1,16 +1,14 @@
-import { Box, Flex } from '@chakra-ui/layout';
-import { useDisclosure, Text } from '@chakra-ui/react';
+import { useDisclosure } from '@chakra-ui/react';
 import Peer from 'peerjs';
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { MultiplayerSettingsType } from '../../App';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { AvatarBar } from '../../components/AvatarBar';
-import { FoodCell } from '../../components/Cells/FoodCell';
-import { HeadCell } from '../../components/Cells/HeadCell';
-import { StandardCell } from '../../components/Cells/StandardCell';
-import { TailCell } from '../../components/Cells/TailCell';
 import { Controller } from '../../components/Controller';
-import { GameOverModal } from '../../components/GameOverModal';
-import { MenuModal } from '../../components/MenuModal';
 import { GameOverModalMultiplayer } from '../../components/Multiplayer/GameOverModalMultiplayer';
 import {
   CREATINE_EFFECT_DURATION,
@@ -37,6 +35,7 @@ import {
   getNextNodeForDirection,
   getOppositeDirection,
 } from '../../utils/snake/snake-coordination';
+import Board from '../Board';
 
 export type FoodType = 'protein' | 'meat' | 'steroid' | 'creatine';
 export type CellData = {
@@ -73,8 +72,7 @@ const MultiplayerGame: React.FC<{
     new Set([snakeRef.current.head?.data?.value || 1])
   );
   const { direction, setDirection, snakeCellsSizeRef } = useSnakeMovement(
-    snakeRef.current.head!.data!.direction,
-    snakeRef.current
+    snakeRef.current.head!.data!.direction
   );
   const [foodCell, setFoodCell] = useState({
     value: getFoodCell(board),
@@ -105,7 +103,6 @@ const MultiplayerGame: React.FC<{
   });
   const snakeFoodConsumed = useRef<FoodType>();
   const effects = useRef<{ [food: string]: number | null }>({});
-  const cellRef = useRef<HTMLDivElement | null>(null);
   // Multiplayer
   const enemyCells = useRef<Set<number> | null>(null);
   const [playerWon, setPlayerWon] = useState(false);
@@ -233,11 +230,11 @@ const MultiplayerGame: React.FC<{
         setSnakeCells(newSnakeCells);
         sendData(newSnakeCells);
       } else {
-        setGameOver(true);
-        openModal();
+        gameOverHandler();
       }
     } else {
       sendLostSignal();
+      gameOverHandler();
     }
   };
 
@@ -267,14 +264,17 @@ const MultiplayerGame: React.FC<{
     if (steroidConsumedRef.current) {
       steroidConsumedRef.current = false;
 
-      delete effects.current['steroid'];
-      delete effects.current['creatine'];
-      delete effects.current['meat'];
-      delete effects.current['protein'];
-
-      cancelCreatineEffectDuration();
       cancelSteroidEffectDuration();
     }
+    if (creatineEffectDuration) {
+      cancelCreatineEffectDuration();
+    }
+
+    // delete effects.current['steroid'];
+    // delete effects.current['creatine'];
+    // delete effects.current['meat'];
+    // delete effects.current['protein'];
+    effects.current = {};
   }
 
   function removeCells(count: number) {
@@ -387,7 +387,6 @@ const MultiplayerGame: React.FC<{
   function onCreatineEffectOver() {
     delete effects.current['creatine'];
 
-    // TODO: onCreatineEffectOver
     if (!steroidConsumedRef.current && !gameOver) {
       // Side effects for creatine
       reverseSnake();
@@ -408,108 +407,30 @@ const MultiplayerGame: React.FC<{
     }
   }
 
-  const effectsArr: { duration: number | null; food: FoodType }[] = [];
-  for (let effect in effects.current) {
-    effectsArr.push({
-      duration: (effects.current as any)[effect] as number | null,
-      food: effect as FoodType,
-    });
-  }
-
   const score = snakeCells.size - 1;
 
   return (
     <>
       <AvatarBar
-        effects={effectsArr}
+        effects={effects.current}
         score={score}
         untilNextFood={foodDuration}
       />
-      <Flex
-        direction='column'
-        align='center'
-        boxShadow='lg'
-        borderRadius='md'
-        border='1px solid #ffffff0a'
-        p={{ base: 2, lg: 10 }}
-        w={{ base: '95%', lg: 'auto' }}
-        bg='primary.main'
-        zIndex={1}
-        className='parent-board'
-      >
-        <Box
-          outline='2px solid white'
-          outlineColor='#2f2828'
-          w={{ base: '100%', lg: '550px' }}
-          className='board'
-        >
-          {board.map((row, index) => (
-            <Flex key={index}>
-              {row.map((cell) => {
-                // Let this be standard cell
-                let cellType: any = null;
-                if (cell === snakeRef.current.head!.data!.value) {
-                  cellType = (
-                    <HeadCell direction={snake.head!.data!.direction} />
-                  );
-                } else if (cell === foodCell.value ? 'violet' : undefined) {
-                  cellType = <FoodCell food={foodCell.food} />;
-                } else if (
-                  snake.tail?.data?.value === cell &&
-                  snake.tail.data.value !== snake.head?.data?.value
-                ) {
-                  const snakeTailDirection = snake.tail!.data!.direction;
-                  const snakeTailNextDirection =
-                    snake.tail?.next?.data?.direction;
-
-                  cellType = (
-                    <TailCell
-                      direction={snakeTailDirection}
-                      nextDirection={snakeTailNextDirection}
-                      // If it will change direction in the next step
-                      isTransitional={
-                        snakeTailDirection !== snakeTailNextDirection
-                      }
-                    />
-                  );
-                } else if (snakeCells.has(cell)) {
-                  const match = snake.find((node) => node.data?.value === cell);
-
-                  const currentDirection = match?.currentNode.data?.direction;
-                  const nextDirection = match?.nextNode?.data?.direction;
-
-                  cellType = (
-                    <StandardCell
-                      direction={currentDirection}
-                      nextDirection={nextDirection}
-                      isTransitional={currentDirection !== nextDirection}
-                    />
-                  );
-                }
-
-                return (
-                  <Box
-                    h={`${cellRef.current?.clientWidth}px`}
-                    ref={cellRef}
-                    flex={1}
-                    outline='1px solid #2f2828'
-                    key={cell}
-                    bg={enemyCells.current?.has(cell) ? 'red' : undefined}
-                  >
-                    {cellType}
-                  </Box>
-                );
-              })}
-            </Flex>
-          ))}
-        </Box>
-      </Flex>
-      {!disableController && (
-        <Controller
-          changeDirection={(_direction: DIRECTION) => setDirection(_direction)}
-          currentDirection={direction}
-        />
-      )}
+      {/* Need to add multiplayer, enemy cell */}
+      <Board
+        board={board}
+        foodCell={foodCell}
+        snakeCells={snakeCells}
+        snakeRef={snakeRef}
+      />
+      <Controller
+        changeDirection={useCallback(
+          (_direction: DIRECTION) => setDirection(_direction),
+          []
+        )}
+        currentDirection={direction}
+        disable={disableController}
+      />
       <GameOverModalMultiplayer
         isOpen={isOpen}
         onClose={closeModal}
