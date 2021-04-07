@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useDisclosure } from '@chakra-ui/react';
 import Peer from 'peerjs';
 import React, {
@@ -35,23 +36,14 @@ import {
   getNextNodeForDirection,
   getOppositeDirection,
 } from '../../utils/snake/snake-coordination';
-import Board from '../Board';
-
-export type FoodType = 'protein' | 'meat' | 'steroid' | 'creatine';
-export type CellData = {
-  row: number;
-  cell: number;
-  value: number;
-  direction: DIRECTION;
-};
-
-// values are 0, 1, 2, 3
-export enum DIRECTION {
-  LEFT,
-  UP,
-  RIGHT,
-  DOWN,
-}
+import MultiplayerBoard from '../../components/Multiplayer/MultiplayerBoard';
+import {
+  CellData,
+  DataType,
+  DIRECTION,
+  FoodType,
+  MoveSnakeDataType,
+} from '../../types/types';
 
 const MultiplayerGame: React.FC<{
   connection: Peer.DataConnection;
@@ -64,6 +56,7 @@ const MultiplayerGame: React.FC<{
     snakeSpeed: initialSnakeSpeed,
     disableController,
     board,
+    setBoardSettings,
   } = useContext(MainContext);
   const snakeRef = useRef(
     new SingleLinkedList(new Node(getInitialSnakeCell(board)))
@@ -105,6 +98,8 @@ const MultiplayerGame: React.FC<{
   const effects = useRef<{ [food: string]: number | null }>({});
   // Multiplayer
   const enemyCells = useRef<Set<number> | null>(null);
+  const enemyFoodCell = useRef<typeof foodCell | null>(null);
+  const enemySnake = useRef<SingleLinkedList<CellData> | null>(null);
   const [playerWon, setPlayerWon] = useState(false);
   const playAgainWithPlayer = useRef<{ me: boolean; friend: boolean }>({
     me: false,
@@ -122,10 +117,9 @@ const MultiplayerGame: React.FC<{
     snakeSpeed = getSnakeSpeedOnCreatine(snakeSpeed);
   }
 
-  // Handling the multiplayer
+  // Handling the multiplayer, on data recieve
   useEffect(() => {
-    connection.on('data', (data: [] | 'LOST' | 'PLAY_AGAIN') => {
-      console.log('Data recieved: ', data);
+    connection.on('data', (data: DataType) => {
       if (data === 'LOST') {
         enemyCells.current = null;
         setPlayerWon(true);
@@ -135,7 +129,16 @@ const MultiplayerGame: React.FC<{
 
         playAgain();
       } else {
-        enemyCells.current = new Set(data);
+        if (data.type === 'SET_SETTINGS') {
+          setBoardSettings(data.boardSettings);
+        } else if (data.type === 'MOVE_SNAKE') {
+          const dataObj: MoveSnakeDataType = JSON.parse(data.payload);
+          // Set enemy data
+          // TODO: maybe these need to be with usestate
+          enemyCells.current = new Set(dataObj.cells);
+          enemyFoodCell.current = dataObj.foodCell;
+          enemySnake.current = dataObj.snake;
+        }
       }
     });
   }, []);
@@ -201,7 +204,14 @@ const MultiplayerGame: React.FC<{
 
   // Multiplayer methods
   const sendData = (cells: Set<number>) => {
-    connection.send(Array.from(cells));
+    connection.send({
+      type: 'MOVE_SNAKE',
+      payload: JSON.stringify({
+        cells: Array.from(cells),
+        foodCell,
+        snake: snakeRef.current,
+      }),
+    });
   };
 
   const sendLostSignal = () => {
@@ -217,7 +227,10 @@ const MultiplayerGame: React.FC<{
       const newNode = getNextNodeForDirection(snake.head!, direction, board);
 
       // If it's not colliding
-      if (!snakeCells.has(newNode.data!.value)) {
+      if (
+        !snakeCells.has(newNode.data!.value) &&
+        !enemyCells.current?.has(newNode.data!.value)
+      ) {
         const newSnakeCells = changeDirection(newNode, snake, snakeCells);
 
         const foodConsumed = newNode.data!.value === foodCell.value;
@@ -230,6 +243,7 @@ const MultiplayerGame: React.FC<{
         setSnakeCells(newSnakeCells);
         sendData(newSnakeCells);
       } else {
+        sendLostSignal();
         gameOverHandler();
       }
     } else {
@@ -270,10 +284,6 @@ const MultiplayerGame: React.FC<{
       cancelCreatineEffectDuration();
     }
 
-    // delete effects.current['steroid'];
-    // delete effects.current['creatine'];
-    // delete effects.current['meat'];
-    // delete effects.current['protein'];
     effects.current = {};
   }
 
@@ -351,6 +361,8 @@ const MultiplayerGame: React.FC<{
     const friendWantsToPlay = playAgainWithPlayer.current.friend;
     // If both players agree to play
     if (iWantToPlay && friendWantsToPlay) {
+      setPlayerWon(false);
+
       playAgainWithPlayer.current = {
         me: false,
         friend: false,
@@ -417,11 +429,14 @@ const MultiplayerGame: React.FC<{
         untilNextFood={foodDuration}
       />
       {/* Need to add multiplayer, enemy cell */}
-      <Board
+      <MultiplayerBoard
         board={board}
         foodCell={foodCell}
+        enemyFoodCell={enemyFoodCell.current}
         snakeCells={snakeCells}
+        enemyCells={enemyCells.current}
         snakeRef={snakeRef}
+        enemySnakeRef={enemySnake}
       />
       <Controller
         changeDirection={useCallback(

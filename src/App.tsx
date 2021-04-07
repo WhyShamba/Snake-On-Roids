@@ -11,8 +11,9 @@ import { createBoard } from './utils/createBoard';
 import Peer from 'peerjs';
 import './App.css';
 import MultiplayerWrapper from './containers/Multiplayer/MultiplayerWrapper';
+import { generateId } from './utils/generateId';
 
-type SettingsType = {
+export type SettingsType = {
   boardSize: number;
   snakeSpeed: number;
   musicVolume: number;
@@ -91,10 +92,9 @@ function App() {
   };
 
   const handleMultiplayer = (connectionPeerId?: string) => {
-    const peer = new Peer();
+    const peer = new Peer(generateId());
 
     peer.on('open', function (id) {
-      console.log('App.tsx: My peer ID is: ' + id);
       setMultiplayerSettings({
         peer,
         peerId: id,
@@ -118,6 +118,7 @@ function App() {
       <MultiplayerWrapper
         {...multiplayerSettings}
         cancelGame={() => setMultiplayerSettings(undefined)}
+        boardSettings={settings}
       />
     );
   }
@@ -152,6 +153,7 @@ function App() {
             }),
           toggleMute: () => setSettings({ ...settings, mute: !settings.mute }),
           togglePlayGame: () => setPlayGame(!playGame),
+          setBoardSettings: setSettings,
         }}
       >
         {component}
