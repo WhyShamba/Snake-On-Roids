@@ -1,4 +1,4 @@
-import { MultiplayerSettingsType, SettingsType } from '../App';
+import { MultiplayerSettingsType } from '../App';
 import { SingleLinkedList } from '../utils/SingleLinkedList';
 
 export type FoodType = 'protein' | 'meat' | 'steroid' | 'creatine';

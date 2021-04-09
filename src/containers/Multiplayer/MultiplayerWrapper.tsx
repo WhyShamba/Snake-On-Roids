@@ -2,7 +2,7 @@
 import { Text, useDisclosure } from '@chakra-ui/react';
 import Peer from 'peerjs';
 import React, { useEffect, useState } from 'react';
-import { MultiplayerSettingsType, SettingsType } from '../../App';
+import { MultiplayerSettingsType } from '../../App';
 import { MenuModal } from '../../components/MenuModal';
 import { GetReadyModal } from '../../components/Multiplayer/GetReadyModal';
 import { useCountdown } from '../../custom-hooks/useCountdown';

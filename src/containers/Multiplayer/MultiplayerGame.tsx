@@ -376,6 +376,9 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
     if (creatineEffectDuration) {
       cancelCreatineEffectDuration();
     }
+    if (withTimer) {
+      cancelGameCountdown();
+    }
 
     effects.current = {};
 
@@ -484,6 +487,10 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
       };
       setFoodCell(newFoodCell);
       snakeFoodConsumed.current = undefined;
+
+      if (withTimer) {
+        resetGameCountdown();
+      }
 
       setDirection(generateDirectionMultiplayer(isGuest));
 
