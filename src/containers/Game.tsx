@@ -63,12 +63,12 @@ const Game = () => {
     count: steroidEffectDuration,
     resetCount: resetSteroidEffectDuration,
     cancelCountdown: cancelSteroidEffectDuration,
-  } = useCountdown(0, onSteroidEffectOver);
+  } = useCountdown(0, false, onSteroidEffectOver);
   const {
     count: creatineEffectDuration,
     resetCount: resetCreatineEffectDuration,
     cancelCountdown: cancelCreatineEffectDuration,
-  } = useCountdown(0, onCreatineEffectOver);
+  } = useCountdown(0, false, onCreatineEffectOver);
   const {
     isOpen: gameOver,
     onOpen: openModal,
@@ -78,7 +78,7 @@ const Game = () => {
     count: foodDuration,
     resetCount: resetFoodDuration,
     cancelCountdown: cancelFoodDuration,
-  } = useCountdown(FOOD_DURATION, () => {
+  } = useCountdown(FOOD_DURATION, true, () => {
     if (!gameOver) {
       generateFoodCell();
       resetFoodDuration();

@@ -1,6 +1,7 @@
 import { HStack, IconButton } from '@chakra-ui/react';
 import React from 'react';
-import { BsBellFill, BsTrophy } from 'react-icons/bs';
+import { BsTrophy } from 'react-icons/bs';
+import { IoMdMusicalNotes } from 'react-icons/io';
 
 interface MainButtonsProps {
   handleSound: any;
@@ -27,10 +28,10 @@ export const MainButtons: React.FC<MainButtonsProps> = ({
     >
       <IconButton
         aria-label='leaderboard'
-        icon={<BsBellFill />}
+        icon={<IoMdMusicalNotes />}
         variant='ghost'
         size='lg'
-        fontSize={{ lg: '37px', base: '29px' }}
+        fontSize={{ lg: '45px', base: '38px' }}
         // disabled
         onClick={handleSound}
         ref={btnRef}

@@ -1,5 +1,5 @@
 import { createContext, Dispatch, SetStateAction } from 'react';
-import { SettingsType } from './App';
+import { MultiplayerSettingsType, SettingsType } from './App';
 import { BOARD_SIZE, SNAKE_SPEED } from './consts';
 import { createBoard } from './utils/createBoard';
 
@@ -24,10 +24,30 @@ export type ContextType = {
   playGame: boolean;
   togglePlayGame: () => any;
 
-  setBoardSettings: Dispatch<SetStateAction<SettingsType>>;
+  multiplayer: {
+    snakeSpeed: number;
+    // Value will be LOW, MEDIUM OR HIGH
+    setSnakeSpeed: (value: number) => any;
+
+    board: number[][];
+    boardSize: number;
+    setBoardSize: (value: number) => any;
+
+    withTimer: boolean;
+    gameDuration: number;
+    toggleWithTimer: () => any;
+    setGameDuration: (value: number) => any;
+
+    betterPerf: boolean;
+    toggleBetterPerf: Dispatch<SetStateAction<SettingsType>>;
+
+    setMultiplayerBoardSettings: (
+      settings: MultiplayerSettingsType['settings']
+    ) => any;
+  };
 };
 
-export const MainContext = createContext<ContextType>({
+const initalCtxValues = {
   boardSize: BOARD_SIZE,
   setBoardSize: () => {},
   musicVolume: 1,
@@ -41,5 +61,19 @@ export const MainContext = createContext<ContextType>({
   playGame: false,
   togglePlayGame: () => {},
   board: createBoard(BOARD_SIZE),
-  setBoardSettings: () => {},
+};
+
+export const MainContext = createContext<ContextType>({
+  ...initalCtxValues,
+  multiplayer: {
+    ...initalCtxValues,
+    betterPerf: true,
+    toggleBetterPerf: () => {},
+    gameDuration: 120,
+    setGameDuration: () => {},
+    board: createBoard(BOARD_SIZE),
+    withTimer: false,
+    toggleWithTimer: () => {},
+    setMultiplayerBoardSettings: () => {},
+  },
 });

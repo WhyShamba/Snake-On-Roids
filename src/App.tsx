@@ -1,17 +1,20 @@
 import { Center } from '@chakra-ui/react';
+import Peer from 'peerjs';
 import React, { useEffect, useRef, useState } from 'react';
 import useSound from 'use-sound';
+import './App.css';
 import { CoolBackground } from './components/CoolBackground/CoolBackground';
 import { MainButtons } from './components/MainButtons';
+import { SafariAlert } from './components/SafariAlert';
 import { BOARD_SIZE, SNAKE_SPEED } from './consts';
 import Game from './containers/Game';
 import { Menu } from './containers/Menu';
+import MultiplayerWrapper from './containers/Multiplayer/MultiplayerWrapper';
 import { MainContext } from './context';
 import { createBoard } from './utils/createBoard';
-import Peer from 'peerjs';
-import './App.css';
-import MultiplayerWrapper from './containers/Multiplayer/MultiplayerWrapper';
 import { generateId } from './utils/generateId';
+import { isSafari } from './utils/isSafari';
+import { updateObj } from './utils/updateObj';
 
 export type SettingsType = {
   boardSize: number;
@@ -22,12 +25,21 @@ export type SettingsType = {
 };
 
 export type MultiplayerSettingsType = {
-  peer: Peer;
-  peerId: string;
+  peer?: Peer;
+  peerId?: string;
   connectionPeerId?: string;
+  settings: {
+    betterPerf: boolean;
+    withTimer: boolean;
+    gameDuration: number;
+    boardSize: number;
+    board: number[][];
+    snakeSpeed: number;
+  };
 };
 
 function App() {
+  const [isSafariBrowser, setIsSafariBrowser] = useState(false);
   const [settings, setSettings] = useState<SettingsType>(
     localStorage.getItem('sor:settings')
       ? JSON.parse(localStorage.getItem('sor:settings') || '')
@@ -48,12 +60,25 @@ function App() {
     volume: 0.1,
   });
   const playBtnRef = useRef<HTMLButtonElement | null>(null);
-  const [multiplayerSettings, setMultiplayerSettings] = useState<
-    MultiplayerSettingsType | undefined
-  >();
+  const [
+    multiplayerSettings,
+    setMultiplayerSettings,
+  ] = useState<MultiplayerSettingsType>({
+    settings: {
+      boardSize: BOARD_SIZE,
+      snakeSpeed: SNAKE_SPEED,
+      betterPerf: true,
+      withTimer: false,
+      gameDuration: 120,
+      board: createBoard(BOARD_SIZE),
+    },
+  });
 
   /* eslint-disable */
   useEffect(() => {
+    // TODO: test, if not working add detect-browser library
+    if (isSafari()) setIsSafariBrowser(true);
+
     if (playBtnRef.current && !settings.mute) {
       // Play sound on startup
       const timeout = setTimeout(() => {
@@ -96,6 +121,7 @@ function App() {
 
     peer.on('open', function (id) {
       setMultiplayerSettings({
+        ...multiplayerSettings!,
         peer,
         peerId: id,
         // This field determines whenever the user creates or joins a game
@@ -113,52 +139,124 @@ function App() {
   );
   if (playGame) {
     component = <Game />;
-  } else if (multiplayerSettings) {
+  } else if (multiplayerSettings?.peer) {
     component = (
       <MultiplayerWrapper
         {...multiplayerSettings}
-        cancelGame={() => setMultiplayerSettings(undefined)}
-        boardSettings={settings}
+        cancelGame={() =>
+          setMultiplayerSettings({
+            ...multiplayerSettings,
+            peer: undefined,
+            peerId: undefined,
+          })
+        }
+        boardSettings={multiplayerSettings.settings}
       />
     );
   }
 
   return (
-    <Center minH='100vh' bg='primary.main' color='white' pos='relative'>
-      <CoolBackground />
-      <MainButtons
-        btnRef={playBtnRef}
-        handleSound={handleSound}
-        isPlaying={isPlaying}
-        playGame={playGame}
-      />
-      <MainContext.Provider
-        value={{
-          boardSize: settings.boardSize,
-          musicVolume: settings.musicVolume,
-          snakeSpeed: settings.snakeSpeed,
-          disableController: settings.disableController,
-          mute: settings.mute,
-          playGame,
-          board: createBoard(settings.boardSize),
-          setBoardSize: (boardSize) => setSettings({ ...settings, boardSize }),
-          setMusicVolume: (musicVolume) =>
-            setSettings({ ...settings, musicVolume }),
-          setSnakeSpeed: (snakeSpeed) =>
-            setSettings({ ...settings, snakeSpeed }),
-          toggleControllerHandler: () =>
-            setSettings({
-              ...settings,
-              disableController: !settings.disableController,
-            }),
-          toggleMute: () => setSettings({ ...settings, mute: !settings.mute }),
-          togglePlayGame: () => setPlayGame(!playGame),
-          setBoardSettings: setSettings,
-        }}
-      >
-        {component}
-      </MainContext.Provider>
-    </Center>
+    <>
+      {isSafariBrowser && (
+        <SafariAlert onClose={() => setIsSafariBrowser(false)} />
+      )}
+      <Center minH='100vh' bg='primary.main' color='white' pos='relative'>
+        <CoolBackground />
+        <MainButtons
+          btnRef={playBtnRef}
+          handleSound={handleSound}
+          isPlaying={isPlaying}
+          playGame={playGame}
+        />
+        <MainContext.Provider
+          value={{
+            boardSize: settings.boardSize,
+            musicVolume: settings.musicVolume,
+            snakeSpeed: settings.snakeSpeed,
+            disableController: settings.disableController,
+            mute: settings.mute,
+            playGame,
+            board: createBoard(settings.boardSize),
+            setBoardSize: (boardSize) =>
+              setSettings({ ...settings, boardSize }),
+            setMusicVolume: (musicVolume) =>
+              setSettings({ ...settings, musicVolume }),
+            setSnakeSpeed: (snakeSpeed) =>
+              setSettings({ ...settings, snakeSpeed }),
+            toggleControllerHandler: () =>
+              setSettings({
+                ...settings,
+                disableController: !settings.disableController,
+              }),
+            toggleMute: () =>
+              setSettings({ ...settings, mute: !settings.mute }),
+            togglePlayGame: () => setPlayGame(!playGame),
+            multiplayer: {
+              boardSize: multiplayerSettings.settings.boardSize,
+              snakeSpeed: multiplayerSettings.settings.snakeSpeed,
+              betterPerf: multiplayerSettings.settings.betterPerf,
+              gameDuration: multiplayerSettings.settings.gameDuration,
+              withTimer: multiplayerSettings.settings.withTimer,
+              board: multiplayerSettings.settings.board,
+              setMultiplayerBoardSettings: (
+                _settings: MultiplayerSettingsType['settings']
+              ) =>
+                setMultiplayerSettings({
+                  ...multiplayerSettings,
+                  settings: _settings,
+                }),
+              setBoardSize: (boardSize) =>
+                setMultiplayerSettings(
+                  updateObj(multiplayerSettings, {
+                    settings: {
+                      ...multiplayerSettings.settings,
+                      boardSize,
+                      board: createBoard(boardSize),
+                    },
+                  })
+                ),
+              setSnakeSpeed: (snakeSpeed) =>
+                setMultiplayerSettings(
+                  updateObj(multiplayerSettings, {
+                    settings: {
+                      ...multiplayerSettings?.settings,
+                      snakeSpeed,
+                    },
+                  })
+                ),
+              toggleBetterPerf: () =>
+                setMultiplayerSettings({
+                  ...multiplayerSettings,
+                  settings: {
+                    ...multiplayerSettings.settings,
+                    betterPerf: !multiplayerSettings.settings.betterPerf,
+                  },
+                }),
+              toggleWithTimer: () =>
+                setMultiplayerSettings(
+                  updateObj(multiplayerSettings, {
+                    settings: {
+                      ...multiplayerSettings.settings,
+                      withTimer: !multiplayerSettings.settings.withTimer,
+                    },
+                  })
+                ),
+              setGameDuration: (gameDuration) =>
+                setMultiplayerSettings(
+                  updateObj(multiplayerSettings, {
+                    settings: {
+                      ...multiplayerSettings?.settings,
+                      gameDuration,
+                    },
+                  })
+                ),
+            },
+          }}
+        >
+          {component}
+        </MainContext.Provider>
+      </Center>
+    </>
   );
 }
 

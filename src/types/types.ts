@@ -1,4 +1,4 @@
-import { SettingsType } from '../App';
+import { MultiplayerSettingsType, SettingsType } from '../App';
 import { SingleLinkedList } from '../utils/SingleLinkedList';
 
 export type FoodType = 'protein' | 'meat' | 'steroid' | 'creatine';
@@ -30,7 +30,8 @@ export type MoveSnakeDataType = {
 export type DataType =
   | 'LOST'
   | 'PLAY_AGAIN'
-  | { type: 'SET_SETTINGS'; boardSettings: SettingsType }
+  | { type: 'TIME_EXPIRED'; score: number }
+  | { type: 'SET_SETTINGS'; boardSettings: MultiplayerSettingsType['settings'] }
   | {
       type: 'MOVE_SNAKE';
       payload: string;

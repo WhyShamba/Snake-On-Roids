@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useDisclosure } from '@chakra-ui/react';
+import { useDisclosure, useToast, Text, Flex } from '@chakra-ui/react';
 import Peer from 'peerjs';
 import React, {
   useCallback,
@@ -20,16 +20,16 @@ import { MainContext } from '../../context';
 import { useCountdown } from '../../custom-hooks/useCountdown';
 import { useSetInterval } from '../../custom-hooks/useSetInterval';
 import { useSnakeMovement } from '../../custom-hooks/useSnakeMovement';
-import { generateRandomNum } from '../../utils/generateRandomNum';
 import { Node, SingleLinkedList } from '../../utils/SingleLinkedList';
 import {
   getSnakeSpeedOnCreatine,
   getSnakeSpeedOnRoids,
 } from '../../utils/snake/calculateSnakeSpeed';
 import {
+  generateDirectionMultiplayer,
   getFoodCell,
   getFoodType,
-  getInitialSnakeCell,
+  getInitialSnakeCellMultiplayer,
 } from '../../utils/snake/initializers';
 import {
   changeDirection,
@@ -45,21 +45,38 @@ import {
   MoveSnakeDataType,
 } from '../../types/types';
 
-const MultiplayerGame: React.FC<{
+type MultiplayerGameProps = {
   connection: Peer.DataConnection;
   startGame: boolean;
+  isGuest: boolean;
   activateInitialGetReadyModal: () => any;
-}> = ({ connection, startGame, activateInitialGetReadyModal }) => {
+  onConnectionLost: () => any;
+  cancelGame: () => any;
+};
+
+const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
+  connection,
+  startGame,
+  activateInitialGetReadyModal,
+  isGuest,
+  onConnectionLost,
+  cancelGame,
+}) => {
   // Global game settings
   const {
-    togglePlayGame,
-    snakeSpeed: initialSnakeSpeed,
     disableController,
-    board,
-    setBoardSettings,
+    multiplayer: {
+      board,
+      snakeSpeed: initialSnakeSpeed,
+      setMultiplayerBoardSettings,
+      gameDuration,
+      withTimer,
+    },
   } = useContext(MainContext);
   const snakeRef = useRef(
-    new SingleLinkedList(new Node(getInitialSnakeCell(board)))
+    new SingleLinkedList(
+      new Node(getInitialSnakeCellMultiplayer(board, isGuest))
+    )
   );
   const [snakeCells, setSnakeCells] = useState(
     new Set([snakeRef.current.head?.data?.value || 1])
@@ -76,19 +93,20 @@ const MultiplayerGame: React.FC<{
     count: steroidEffectDuration,
     resetCount: resetSteroidEffectDuration,
     cancelCountdown: cancelSteroidEffectDuration,
-  } = useCountdown(0, onSteroidEffectOver);
+  } = useCountdown(0, true, onSteroidEffectOver);
   const {
     count: creatineEffectDuration,
     resetCount: resetCreatineEffectDuration,
     cancelCountdown: cancelCreatineEffectDuration,
-  } = useCountdown(0, onCreatineEffectOver);
+  } = useCountdown(0, true, onCreatineEffectOver);
   const [gameOver, setGameOver] = useState(true);
   const { isOpen, onOpen: openModal, onClose: closeModal } = useDisclosure();
   const {
     count: foodDuration,
     resetCount: resetFoodDuration,
+    startCount: startFoodDuration,
     cancelCountdown: cancelFoodDuration,
-  } = useCountdown(FOOD_DURATION, () => {
+  } = useCountdown(FOOD_DURATION, false, () => {
     if (!gameOver) {
       generateFoodCell();
       resetFoodDuration();
@@ -101,11 +119,20 @@ const MultiplayerGame: React.FC<{
   const enemyFoodCell = useRef<typeof foodCell | null>(null);
   const enemySnake = useRef<SingleLinkedList<CellData> | null>(null);
   const [playerWon, setPlayerWon] = useState(false);
-  const playAgainWithPlayer = useRef<{ me: boolean; friend: boolean }>({
+  const playAgainWithPlayer = useRef({
     me: false,
     friend: false,
+    scoreMe: 0,
+    scoreEnemy: 0,
   });
   const [waitingForPlayer, setWaitingForPlayer] = useState(false);
+  const toast = useToast();
+  const {
+    cancelCountdown: cancelGameCountdown,
+    count: gameCountdown,
+    startCount: startGameCountdown,
+    resetCount: resetGameCountdown,
+  } = useCountdown(gameDuration, false, sendTimeExpiredSignal);
 
   let snakeSpeed = initialSnakeSpeed;
   if (steroidConsumedRef.current) {
@@ -119,27 +146,62 @@ const MultiplayerGame: React.FC<{
 
   // Handling the multiplayer, on data recieve
   useEffect(() => {
+    if (withTimer) {
+      startGameCountdown();
+    }
     connection.on('data', (data: DataType) => {
       if (data === 'LOST') {
-        enemyCells.current = null;
-        setPlayerWon(true);
-        gameOverHandler();
+        onPlayerWin();
       } else if (data === 'PLAY_AGAIN') {
         playAgainWithPlayer.current.friend = true;
+        if (!playAgainWithPlayer.current.me) {
+          toast({
+            title: `Player wants to play again`,
+            position: 'top',
+            isClosable: true,
+            duration: 5000,
+            status: 'success',
+          });
+        }
 
         playAgain();
       } else {
-        if (data.type === 'SET_SETTINGS') {
-          setBoardSettings(data.boardSettings);
-        } else if (data.type === 'MOVE_SNAKE') {
-          const dataObj: MoveSnakeDataType = JSON.parse(data.payload);
-          // Set enemy data
-          // TODO: maybe these need to be with usestate
-          enemyCells.current = new Set(dataObj.cells);
-          enemyFoodCell.current = dataObj.foodCell;
-          enemySnake.current = dataObj.snake;
+        switch (data.type) {
+          case 'SET_SETTINGS':
+            setMultiplayerBoardSettings(data.boardSettings);
+            break;
+
+          case 'MOVE_SNAKE':
+            const dataObj: MoveSnakeDataType = JSON.parse(data.payload);
+            // Set enemy data
+            enemyCells.current = new Set(dataObj.cells);
+            enemyFoodCell.current = dataObj.foodCell;
+            enemySnake.current = dataObj.snake;
+            break;
+
+          default:
+            // case 'TIME_EXPIRED':
+            if (data.score >= snakeCells.size - 1) {
+              onPlayerWin();
+            } else {
+              onPlayerLose();
+            }
+            break;
         }
       }
+    });
+
+    connection.on('close', () => {
+      toast({
+        title: `Player left the game...`,
+        position: 'top',
+        isClosable: true,
+        duration: 2000,
+        status: 'success',
+      });
+      setTimeout(() => {
+        onConnectionLost();
+      }, 2500);
     });
   }, []);
 
@@ -148,7 +210,14 @@ const MultiplayerGame: React.FC<{
     if (gameOver !== !startGame) {
       setGameOver(!startGame);
     }
+    if (startGame) startFoodDuration();
   }, [startGame]);
+
+  useEffect(() => {
+    snakeRef.current = new SingleLinkedList(
+      new Node(getInitialSnakeCellMultiplayer(board, isGuest))
+    );
+  }, [board]);
 
   useSetInterval(() => {
     if (!gameOver) moveSnake();
@@ -202,6 +271,18 @@ const MultiplayerGame: React.FC<{
     return false;
   };
 
+  const onPlayerWin = () => {
+    playAgainWithPlayer.current.scoreMe += 1;
+    setPlayerWon(true);
+    gameOverHandler();
+  };
+
+  const onPlayerLose = () => {
+    playAgainWithPlayer.current.scoreMe -= 1;
+
+    gameOverHandler();
+  };
+
   // Multiplayer methods
   const sendData = (cells: Set<number>) => {
     connection.send({
@@ -215,12 +296,20 @@ const MultiplayerGame: React.FC<{
   };
 
   const sendLostSignal = () => {
+    playAgainWithPlayer.current.scoreEnemy += 1;
     connection.send('LOST');
   };
 
   const sendPlayAgainSignal = () => {
     connection.send('PLAY_AGAIN');
   };
+
+  function sendTimeExpiredSignal() {
+    connection.send({
+      type: 'TIME_EXPIRED',
+      score: snakeCells.size - 1,
+    });
+  }
 
   const moveSnake = () => {
     if (!isOutOfBounds()) {
@@ -270,8 +359,12 @@ const MultiplayerGame: React.FC<{
   };
 
   function gameOverHandler() {
-    setGameOver(true);
-    openModal();
+    playAgainWithPlayer.current = {
+      ...playAgainWithPlayer.current,
+      me: false,
+      friend: false,
+    };
+
     cancelFoodDuration();
 
     // Turn off effects
@@ -285,6 +378,9 @@ const MultiplayerGame: React.FC<{
     }
 
     effects.current = {};
+
+    setGameOver(true);
+    openModal();
   }
 
   function removeCells(count: number) {
@@ -361,17 +457,23 @@ const MultiplayerGame: React.FC<{
     const friendWantsToPlay = playAgainWithPlayer.current.friend;
     // If both players agree to play
     if (iWantToPlay && friendWantsToPlay) {
+      toast.closeAll();
       setPlayerWon(false);
 
+      // Reset states
       playAgainWithPlayer.current = {
+        ...playAgainWithPlayer.current,
         me: false,
         friend: false,
       };
+
       snakeRef.current = new SingleLinkedList(
-        new Node(getInitialSnakeCell(board))
+        new Node(getInitialSnakeCellMultiplayer(board, isGuest))
       );
-      // TODO: REFRESH ENEMY CELLS. Set em to null
+
       enemyCells.current = null;
+      enemySnake.current = null;
+      enemyFoodCell.current = null;
 
       // setSnakeCells(new Set([snake.head!.data!.value]));
       setSnakeCells(new Set([snakeRef.current.head!.data!.value]));
@@ -383,9 +485,7 @@ const MultiplayerGame: React.FC<{
       setFoodCell(newFoodCell);
       snakeFoodConsumed.current = undefined;
 
-      setDirection(generateRandomNum(0, 3));
-
-      resetFoodDuration();
+      setDirection(generateDirectionMultiplayer(isGuest));
 
       setWaitingForPlayer(false);
 
@@ -429,15 +529,48 @@ const MultiplayerGame: React.FC<{
         untilNextFood={foodDuration}
       />
       {/* Need to add multiplayer, enemy cell */}
-      <MultiplayerBoard
-        board={board}
-        foodCell={foodCell}
-        enemyFoodCell={enemyFoodCell.current}
-        snakeCells={snakeCells}
-        enemyCells={enemyCells.current}
-        snakeRef={snakeRef}
-        enemySnakeRef={enemySnake}
-      />
+      <Flex
+        direction='column'
+        align='center'
+        boxShadow='lg'
+        borderRadius='md'
+        border='1px solid #ffffff0a'
+        p={{ base: 2, lg: 10 }}
+        w={{ base: '95%', lg: 'auto' }}
+        bg='primary.main'
+        zIndex={1}
+        className='parent-board'
+        pos='relative'
+      >
+        {withTimer && (
+          <Text top={-16} pos='absolute' fontSize='lg'>
+            Game Ends In: {gameCountdown}
+          </Text>
+        )}
+        <Text top={-8} pos='absolute' fontSize='lg'>
+          Score:{' '}
+          <b>
+            {playAgainWithPlayer.current.scoreMe} -{' '}
+            {playAgainWithPlayer.current.scoreEnemy}
+          </b>
+        </Text>
+        <Text top={-8} pos='absolute' fontSize='lg'>
+          Score:{' '}
+          <b>
+            {playAgainWithPlayer.current.scoreMe} -{' '}
+            {playAgainWithPlayer.current.scoreEnemy}
+          </b>
+        </Text>
+        <MultiplayerBoard
+          board={board}
+          foodCell={foodCell}
+          enemyFoodCell={enemyFoodCell.current}
+          snakeCells={snakeCells}
+          enemyCells={enemyCells.current}
+          snakeRef={snakeRef}
+          enemySnakeRef={enemySnake}
+        />
+      </Flex>
       <Controller
         changeDirection={useCallback(
           (_direction: DIRECTION) => setDirection(_direction),
@@ -460,7 +593,7 @@ const MultiplayerGame: React.FC<{
 
           playAgain();
         }}
-        onMenuClick={togglePlayGame}
+        onMenuClick={cancelGame}
         playerWon={playerWon}
         loading={waitingForPlayer}
       />

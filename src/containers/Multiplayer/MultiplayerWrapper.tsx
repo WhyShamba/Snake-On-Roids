@@ -6,39 +6,54 @@ import { MultiplayerSettingsType, SettingsType } from '../../App';
 import { MenuModal } from '../../components/MenuModal';
 import { GetReadyModal } from '../../components/Multiplayer/GetReadyModal';
 import { useCountdown } from '../../custom-hooks/useCountdown';
+import { cacheImages } from '../../utils/cacheImages';
 import MultiplayerGame from './MultiplayerGame';
+
+const imagesToPrecache = [
+  '/snake/eyes.png',
+  '/snake/tail.png',
+  '/img/avatar.png',
+  '/img/roid.png',
+  '/img/creatine.webp',
+  '/img/protein.webp',
+];
 
 const MultiplayerWrapper: React.FC<
   MultiplayerSettingsType & {
     cancelGame: () => any;
-    boardSettings: SettingsType;
+    boardSettings: MultiplayerSettingsType['settings'];
   }
 > = ({ peer, peerId, connectionPeerId, cancelGame, boardSettings }) => {
   const [connection, setConnection] = useState<null | Peer.DataConnection>(
     null
   );
   const { isOpen, onClose, onOpen } = useDisclosure();
-  const { count, resetCount } = useCountdown(3, onClose);
+  const { count, resetCount } = useCountdown(3, false, onClose);
 
   const isCreator = !connectionPeerId;
   useEffect(() => {
     if (isCreator) {
-      peer.on('connection', (conn) => {
-        conn.on('open', () => {
-          setConnection(conn);
-          // Open the modal
-          activateInitialGetReadyModal();
+      peer!.on('connection', (conn) => {
+        cacheImages(imagesToPrecache).then(() => {
+          conn.on('open', () => {
+            setConnection(conn);
+            // Open the modal
+            activateInitialGetReadyModal();
 
-          // Send the board settings
-          conn.send({ type: 'SET_SETTINGS', boardSettings });
+            // Send the board settings
+            conn.send({ type: 'SET_SETTINGS', boardSettings });
+          });
         });
       });
     } else {
       // If user presses join game
-      const conn = peer.connect(connectionPeerId!);
-      conn.on('open', () => {
-        setConnection(conn);
-        activateInitialGetReadyModal();
+      const conn = peer!.connect(connectionPeerId!);
+
+      cacheImages(imagesToPrecache).then(() => {
+        conn.on('open', () => {
+          setConnection(conn);
+          activateInitialGetReadyModal();
+        });
       });
     }
   }, []);
@@ -54,6 +69,9 @@ const MultiplayerWrapper: React.FC<
         connection={connection}
         startGame={!isOpen}
         activateInitialGetReadyModal={activateInitialGetReadyModal}
+        isGuest={!!connectionPeerId}
+        onConnectionLost={() => setConnection(null)}
+        cancelGame={cancelGame}
       />
       <GetReadyModal isOpen={isOpen} count={count} onClose={onClose} />
     </>
@@ -84,6 +102,7 @@ const MultiplayerWrapper: React.FC<
       </Text>
     </MenuModal>
   ) : (
+    // TODO: add suspense or something so this does't load infinetely
     <Text>Joining...</Text>
   );
 };

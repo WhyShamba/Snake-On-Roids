@@ -1,4 +1,4 @@
-import { CellData, FoodType } from '../../types/types';
+import { CellData, DIRECTION, FoodType } from '../../types/types';
 import { generateRandomNum } from '../generateRandomNum';
 
 // Now into consideration we have that the rows and column will have same number of rows/columns
@@ -13,6 +13,33 @@ export const getInitialSnakeCell = (board: number[][]): CellData => {
     direction: generateRandomNum(0, 3),
   };
 };
+
+export const getInitialSnakeCellMultiplayer = (
+  board: number[][],
+  isGuest: boolean
+): CellData => {
+  const row = isGuest ? board.length - 1 : 0;
+  const cell = isGuest ? board[row].length - 1 : 0;
+
+  const direction = generateDirectionMultiplayer(isGuest);
+
+  return {
+    row,
+    cell,
+    value: board[row][cell],
+    direction,
+  };
+};
+
+export function generateDirectionMultiplayer(isGuest: boolean) {
+  let direction;
+  if (isGuest) {
+    direction = Math.random() > 0.5 ? DIRECTION.LEFT : DIRECTION.UP;
+  } else {
+    direction = Math.random() > 0.5 ? DIRECTION.DOWN : DIRECTION.RIGHT;
+  }
+  return direction;
+}
 
 export function getFoodCell(board: number[][]) {
   let row = generateRandomNum(0, board.length - 1);

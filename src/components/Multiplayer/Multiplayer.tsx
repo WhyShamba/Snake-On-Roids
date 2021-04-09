@@ -1,7 +1,11 @@
 import {
+  Text,
+  Flex,
   FormControl,
   FormLabel,
   Input,
+  Select,
+  Switch,
   Tab,
   TabList,
   TabPanel,
@@ -9,6 +13,7 @@ import {
   Tabs,
 } from '@chakra-ui/react';
 import React, { useContext, useRef } from 'react';
+import { MdArrowDropDown } from 'react-icons/md';
 import {
   BOARD_SIZE,
   BOARD_SIZE_HIGH,
@@ -33,7 +38,6 @@ export const Multiplayer: React.FC<MultiplayerProps> = ({
   onClose,
   handleMultiplayer,
 }) => {
-  // TODO: this might need to be different ctx and settings for multiplayer games
   const ctx = useContext(MainContext);
   const inputRef = useRef<any>(null);
 
@@ -58,46 +62,110 @@ export const Multiplayer: React.FC<MultiplayerProps> = ({
         </TabList>
 
         <TabPanels>
-          <TabPanel h='464px' p={{ base: 0, lg: 4 }} pt={7}>
+          <TabPanel minH='464px' p={{ base: 0, lg: 4 }} pt={7}>
             <Setting settingName='SNAKE SPEED:'>
               <SettingsButton
-                onClick={() => ctx.setSnakeSpeed(SNAKE_SPEED)}
-                isActive={ctx.snakeSpeed === SNAKE_SPEED}
+                onClick={() => ctx.multiplayer.setSnakeSpeed(SNAKE_SPEED)}
+                isActive={ctx.multiplayer.snakeSpeed === SNAKE_SPEED}
               >
                 LOW
               </SettingsButton>
               <SettingsButton
-                onClick={() => ctx.setSnakeSpeed(SNAKE_SPEED_MEDIUM)}
-                isActive={ctx.snakeSpeed === SNAKE_SPEED_MEDIUM}
+                onClick={() =>
+                  ctx.multiplayer.setSnakeSpeed(SNAKE_SPEED_MEDIUM)
+                }
+                isActive={ctx.multiplayer.snakeSpeed === SNAKE_SPEED_MEDIUM}
               >
                 MEDIUM
               </SettingsButton>
               <SettingsButton
-                onClick={() => ctx.setSnakeSpeed(SNAKE_SPEED_HIGH)}
-                isActive={ctx.snakeSpeed === SNAKE_SPEED_HIGH}
+                onClick={() => ctx.multiplayer.setSnakeSpeed(SNAKE_SPEED_HIGH)}
+                isActive={ctx.multiplayer.snakeSpeed === SNAKE_SPEED_HIGH}
               >
                 HIGH
               </SettingsButton>
             </Setting>
             <Setting settingName='BOARD SIZE:'>
               <SettingsButton
-                onClick={() => ctx.setBoardSize(BOARD_SIZE)}
-                isActive={ctx.boardSize === BOARD_SIZE}
+                onClick={() => ctx.multiplayer.setBoardSize(BOARD_SIZE)}
+                isActive={ctx.multiplayer.boardSize === BOARD_SIZE}
               >
                 10 X 10
               </SettingsButton>
               <SettingsButton
-                onClick={() => ctx.setBoardSize(BOARD_SIZE_MEDIUM)}
-                isActive={ctx.boardSize === BOARD_SIZE_MEDIUM}
+                onClick={() => ctx.multiplayer.setBoardSize(BOARD_SIZE_MEDIUM)}
+                isActive={ctx.multiplayer.boardSize === BOARD_SIZE_MEDIUM}
               >
                 12 X 12
               </SettingsButton>
               <SettingsButton
-                onClick={() => ctx.setBoardSize(BOARD_SIZE_HIGH)}
-                isActive={ctx.boardSize === BOARD_SIZE_HIGH}
+                onClick={() => ctx.multiplayer.setBoardSize(BOARD_SIZE_HIGH)}
+                isActive={ctx.multiplayer.boardSize === BOARD_SIZE_HIGH}
               >
                 15 x 15
               </SettingsButton>
+            </Setting>
+            <Setting settingName='Duration game:'>
+              <Flex direction='column' w='95%' align='center'>
+                <Switch
+                  size='lg'
+                  mb={4}
+                  onChange={ctx.multiplayer.toggleWithTimer}
+                  checked={ctx.multiplayer.withTimer}
+                />
+                <FormControl isDisabled={!ctx.multiplayer.withTimer}>
+                  <FormLabel>
+                    The snake with highest score wins after:
+                  </FormLabel>
+                  <Select
+                    icon={<MdArrowDropDown />}
+                    bg='primary.main'
+                    onChange={(e) =>
+                      ctx.multiplayer.setGameDuration(+e.target.value)
+                    }
+                    value={ctx.multiplayer.gameDuration.toString()}
+                  >
+                    <option style={{ background: '#171717' }} value='45'>
+                      45 seconds
+                    </option>
+                    <option style={{ background: '#171717' }} value='60'>
+                      60 seconds
+                    </option>
+                    <option style={{ background: '#171717' }} value='75'>
+                      75 seconds
+                    </option>
+                    <option style={{ background: '#171717' }} value='90'>
+                      90 seconds
+                    </option>
+                    <option style={{ background: '#171717' }} value='120'>
+                      120 seconds
+                    </option>
+                    <option style={{ background: '#171717' }} value='180'>
+                      180 seconds
+                    </option>
+                  </Select>
+                </FormControl>
+              </Flex>
+            </Setting>
+            <Setting settingName='Max Performance'>
+              <Flex
+                w='95%'
+                direction={{ base: 'column', lg: 'row' }}
+                justify='center'
+                align='center'
+              >
+                <Switch
+                  size='lg'
+                  onClick={ctx.multiplayer.toggleBetterPerf as any}
+                  checked={ctx.multiplayer.betterPerf || true}
+                  defaultChecked={true}
+                />
+                <Text fontSize='md' ml={4}>
+                  If checked, your game might be laggy depending on your
+                  PC/Mobile Performance. For old and low performance devices
+                  this option should be off (<b>Default: ON</b>)
+                </Text>
+              </Flex>
             </Setting>
             <SettingsButton
               w='100%'
@@ -112,14 +180,24 @@ export const Multiplayer: React.FC<MultiplayerProps> = ({
           <TabPanel h='464px' p={{ base: 0, lg: 4 }} pt={7}>
             <FormControl>
               <FormLabel>Invitation Key</FormLabel>
-              <Input type='text' ref={inputRef} autoComplete='off' />
+              <Input
+                type='text'
+                ref={inputRef}
+                autoComplete='off'
+                textTransform='uppercase'
+                maxLength={5}
+              />
             </FormControl>
             <SettingsButton
               w='100%'
               mx='auto'
               display='block'
               mt={8}
-              onClick={() => handleMultiplayer(inputRef.current.value)}
+              onClick={() =>
+                handleMultiplayer(
+                  (inputRef.current.value as string).toUpperCase()
+                )
+              }
             >
               Join
             </SettingsButton>
