@@ -97,7 +97,8 @@ export const Controller: React.FC<ControllerProps> = React.memo(
                 }}
                 _focus={{}}
                 _active={{}}
-                onClick={() => changeDirection(arrow.direction)}
+                onMouseDown={() => changeDirection(arrow.direction)}
+                onTouchStart={() => changeDirection(arrow.direction)}
                 opacity='0.7'
                 {...activeStyle}
               >
