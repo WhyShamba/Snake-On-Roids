@@ -36,7 +36,7 @@ import {
   getNextNodeForDirection,
   getOppositeDirection,
 } from '../../utils/snake/snake-coordination';
-import MultiplayerBoard from '../Multiplayer/MultiplayerBoard(decrepted)';
+import MultiplayerBoard from './MultiplayerBoard(decrepted)';
 import {
   CellData,
   DataType,
