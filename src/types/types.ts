@@ -3,6 +3,8 @@ import { SingleLinkedList } from '../utils/SingleLinkedList';
 
 export type FoodType = 'protein' | 'meat' | 'steroid' | 'creatine';
 
+export type SnakeType = SingleLinkedList<CellData>;
+
 export type CellData = {
   row: number;
   cell: number;
@@ -24,15 +26,132 @@ export type MoveSnakeDataType = {
     value: number;
     food: FoodType;
   };
-  snake: SingleLinkedList<CellData>;
+  snake: SnakeType;
 };
 
-export type DataType =
-  | 'LOST'
-  | 'PLAY_AGAIN'
-  | { type: 'TIME_EXPIRED'; score: number }
+export type FoodCell = {
+  value: number;
+  food: FoodType;
+};
+
+export type GameDataType =
   | { type: 'SET_SETTINGS'; boardSettings: MultiplayerSettingsType['settings'] }
+  | { type: 'UPDATE_COUNTDOWN'; count: number };
+
+export type DataType =
+  | 'PLAY_AGAIN'
+  | 'LOST'
+  | { type: 'TIME_EXPIRED'; score: number }
   | {
       type: 'MOVE_SNAKE';
       payload: string;
+    };
+
+export type DataTypeNew =
+  | 'LOST'
+  | 'PLAY_AGAIN'
+  | { type: 'TIME_EXPIRED'; score: number }
+  | {
+      type: 'MOVE_SNAKE';
+      payload: string;
+    };
+
+export type SnakeReducerStateType = {
+  board: number[][];
+  score: number;
+  snake: SnakeType;
+  snakeCells: number[];
+  initialSnakeSpeed: number;
+  // direction: DIRECTION;
+  foodCell: FoodCell;
+  isGuest: boolean;
+  enemy?: Partial<{
+    snake: SnakeType;
+    snakeCells: number[];
+    foodCell: FoodCell;
+  }>;
+};
+
+export type SnakeReducerActionType =
+  | {
+      type: 'GENERATE_FOOD_CELL' | 'GAME_OVER';
+    }
+  | {
+      type: 'MOVE_SNAKE';
+      newSnakeCells: number[];
+      newScore: number;
+      foodEaten: FoodType | null;
+      sendMoveData?: (cells: number[], foodCell: FoodCell) => void;
+    }
+  | {
+      type: 'PLAY_AGAIN';
+      sendInitialSnakePosition?: (foodCell: FoodCell) => void;
+    }
+  | {
+      type: 'SET_ENEMY_INFO';
+      enemySnake: SnakeType;
+      enemyCells: number[];
+      enemyFoodCell: FoodCell;
+    }
+  | {
+      type: 'STEROID_SIDE_EFFECT';
+      newSnakeCells: number[];
+    };
+
+export type CountReducerType = {
+  foodCount: number;
+  effectsCount: {
+    steroid?: number;
+    creatine?: number;
+    protein?: number;
+    meat?: number;
+  };
+  currentFoodEffect: 'creatine' | 'steroid' | null;
+};
+
+export type CountReducerActionType =
+  | {
+      type: 'RESET_FOOD_TIMER' | 'GAME_OVER' | 'PLAY_AGAIN';
+    }
+  | {
+      type: 'RESET_SPECIFIC_FOOD_TIMER' | 'CLEAR_SPECIFIC_FOOD_TIMER';
+      food: FoodType;
+    }
+  | {
+      type: 'CONSUME_FOOD';
+      food: FoodType;
+    }
+  | {
+      type: 'TICK';
+    };
+
+export type GameReducerStateType = {
+  gameOver: boolean;
+  playerWon: boolean;
+  multiplayerStats: {
+    playAgain: {
+      approved: boolean;
+      me: boolean;
+      friend: boolean;
+      loading: boolean;
+    };
+    scores: {
+      scoreMe: number;
+      scoreEnemy: number;
+    };
+  };
+};
+
+export type GameReducerActionType =
+  | {
+      type:
+        | 'TOGGLE_GAME_OVER'
+        | 'GAME_OVER'
+        | 'PLAY_AGAIN'
+        | 'ON_PLAYER_WIN'
+        | 'ON_PLAYER_LOSS';
+    }
+  | {
+      type: 'PLAY_AGAIN_REQUEST';
+      byMe: boolean;
     };

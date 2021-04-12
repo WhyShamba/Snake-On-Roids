@@ -1,6 +1,6 @@
 export class Node<DataType = any> {
   next: Node<DataType> | null;
-  data?: DataType;
+  data: DataType;
 
   constructor(data: DataType, nextNode: Node | null = null) {
     this.data = data;
