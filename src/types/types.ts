@@ -144,14 +144,15 @@ export type GameReducerStateType = {
 
 export type GameReducerActionType =
   | {
-      type:
-        | 'TOGGLE_GAME_OVER'
-        | 'GAME_OVER'
-        | 'PLAY_AGAIN'
-        | 'ON_PLAYER_WIN'
-        | 'ON_PLAYER_LOSS';
+      type: 'GAME_OVER' | 'PLAY_AGAIN' | 'ON_PLAYER_WIN' | 'ON_PLAYER_LOSS';
+    }
+  | {
+      type: 'SET_GAME_OVER';
+      gameOver: boolean;
     }
   | {
       type: 'PLAY_AGAIN_REQUEST';
       byMe: boolean;
+      sendPlayAgainSignal?: () => any;
+      notifyPlayer?: () => any;
     };

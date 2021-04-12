@@ -24,8 +24,8 @@ export const gameReducer = (
 ) =>
   produce(state, (draft) => {
     switch (action.type) {
-      case 'TOGGLE_GAME_OVER':
-        draft.gameOver = !state.gameOver;
+      case 'SET_GAME_OVER':
+        draft.gameOver = action.gameOver;
         break;
 
       case 'GAME_OVER':
@@ -35,13 +35,19 @@ export const gameReducer = (
         draft.multiplayerStats.playAgain.approved = false;
 
         break;
-      // TODO: add useEffect on playAgain.approved if true dispatch PLAY_AGAIN
+
       case 'PLAY_AGAIN_REQUEST':
-        draft.multiplayerStats.playAgain.loading = true;
         if (action.byMe) {
+          draft.multiplayerStats.playAgain.loading = true;
           draft.multiplayerStats.playAgain.me = true;
+
+          // Notify other peer
+          action.sendPlayAgainSignal!();
         } else {
           draft.multiplayerStats.playAgain.friend = true;
+
+          // Notify current peer
+          // action.notifyPlayer!();
         }
 
         if (
@@ -50,10 +56,12 @@ export const gameReducer = (
         )
           draft.multiplayerStats.playAgain.approved = true;
         break;
+
       case 'PLAY_AGAIN':
         // If both players agree to play
         if (state.multiplayerStats.playAgain.approved) {
           draft.playerWon = false;
+          draft.gameOver = false;
 
           // Reset states
           draft.multiplayerStats.playAgain.me = false;
@@ -63,10 +71,12 @@ export const gameReducer = (
         }
         break;
       case 'ON_PLAYER_LOSS':
+        draft.gameOver = true;
         draft.playerWon = false;
         draft.multiplayerStats.scores.scoreEnemy += 1;
         break;
       case 'ON_PLAYER_WIN':
+        draft.gameOver = true;
         draft.playerWon = true;
         draft.multiplayerStats.scores.scoreMe += 1;
         break;

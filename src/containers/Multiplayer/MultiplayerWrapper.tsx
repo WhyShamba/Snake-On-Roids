@@ -93,7 +93,12 @@ const MultiplayerWrapper: React.FC<
     onOpen();
 
     // Syncing counts, only the guest peer when is ready send countdown
-    if (!isCreator) resetCount(3);
+    if (!isCreator) {
+      resetCount(3);
+    } else {
+      // Is creator, on playagain start from 3 at beginning and not 0
+      setCount(3);
+    }
   };
 
   return connection ? (
