@@ -11,7 +11,7 @@ import React from 'react';
 import { FoodType } from '../types/types';
 
 interface AvatarBarProps {
-  effects: { [food: string]: number | null };
+  effects: { [food: string]: number | null | undefined };
   score: number;
   untilNextFood: number;
 }
@@ -23,10 +23,11 @@ export const AvatarBar: React.FC<AvatarBarProps> = ({
 }) => {
   const effectsArr: { duration: number | null; food: FoodType }[] = [];
   for (let effect in effects) {
-    effectsArr.push({
-      duration: (effects as any)[effect] as number | null,
-      food: effect as FoodType,
-    });
+    if (effects[effect])
+      effectsArr.push({
+        duration: (effects as any)[effect] as number | null,
+        food: effect as FoodType,
+      });
   }
 
   return (

@@ -1,8 +1,6 @@
-import { Flex, Box } from '@chakra-ui/react';
-import React from 'react';
-import { useRef } from 'react';
-import { CellData, FoodType } from '../../types/types';
-import { SingleLinkedList } from '../../utils/SingleLinkedList';
+import { Box, Flex } from '@chakra-ui/react';
+import React, { useRef } from 'react';
+import { FoodCell as FoodCellType, SnakeType } from '../../types/types';
 import { FoodCell } from '../Cells/FoodCell';
 import { HeadCell } from '../Cells/HeadCell';
 import { StandardCell } from '../Cells/StandardCell';
@@ -10,28 +8,22 @@ import { TailCell } from '../Cells/TailCell';
 
 interface MultiplayerBoardProps {
   board: number[][];
-  snakeRef: React.MutableRefObject<SingleLinkedList<CellData>>;
-  enemySnakeRef: React.MutableRefObject<SingleLinkedList<CellData> | null>;
-  foodCell: {
-    value: number;
-    food: FoodType;
-  };
-  enemyFoodCell: {
-    value: number;
-    food: FoodType;
-  } | null;
-  snakeCells: Set<number>;
-  enemyCells: Set<number> | null;
+  snake: SnakeType;
+  enemySnakeRef?: SnakeType;
+  foodCell: FoodCellType;
+  enemyFoodCell?: FoodCellType | null;
+  snakeCells: Array<number>;
+  enemyCells?: Array<number>;
 }
 
 const MultiplayerBoard: React.FC<MultiplayerBoardProps> = ({
   board,
-  snakeRef,
+  snake,
   foodCell,
   snakeCells,
   enemyCells,
   enemyFoodCell,
-  enemySnakeRef,
+  enemySnakeRef: enemySnake,
 }) => {
   const cellRef = useRef<HTMLDivElement | null>(null);
 
@@ -46,29 +38,29 @@ const MultiplayerBoard: React.FC<MultiplayerBoardProps> = ({
         <Flex key={index}>
           {row.map((cell) => {
             let bg = 'green.500';
-            let snake = snakeRef;
-            if (enemyCells?.has(cell) && enemySnakeRef.current) {
-              snake = enemySnakeRef as typeof snakeRef;
+            let currentSnake = snake;
+
+            if (enemyCells?.includes(cell) && enemySnake) {
+              currentSnake = enemySnake;
               bg = 'red';
             }
 
             let cellType: any = null;
-            if (snakeCells.has(cell) || enemyCells?.has(cell)) {
-              if (cell === snake.current.head!.data!.value) {
+            if (snakeCells.includes(cell) || enemyCells?.includes(cell)) {
+              if (cell === currentSnake.head!.data!.value) {
                 cellType = (
                   <HeadCell
-                    direction={snake.current.head!.data!.direction}
+                    direction={currentSnake.head!.data!.direction}
                     bg={bg}
                   />
                 );
               } else if (
-                snake.current.tail?.data?.value === cell &&
-                snake.current.tail.data.value !==
-                  snake.current.head?.data?.value
+                currentSnake.tail?.data?.value === cell &&
+                currentSnake.tail.data.value !== currentSnake.head?.data?.value
               ) {
-                const snakeTailDirection = snake.current.tail!.data!.direction;
+                const snakeTailDirection = currentSnake.tail!.data!.direction;
                 const snakeTailNextDirection =
-                  snake.current.tail?.next?.data?.direction;
+                  currentSnake.tail?.next?.data?.direction;
 
                 cellType = (
                   <TailCell
@@ -82,9 +74,12 @@ const MultiplayerBoard: React.FC<MultiplayerBoardProps> = ({
                   />
                 );
               } else {
-                const match = snakeRef.current.find(
-                  (node) => node.data?.value === cell
-                );
+                let match;
+                if (currentSnake.find) {
+                  match = currentSnake?.find(
+                    (node) => node.data?.value === cell
+                  );
+                }
 
                 const currentDirection = match?.currentNode.data?.direction;
                 const nextDirection = match?.nextNode?.data?.direction;

@@ -15,7 +15,7 @@ interface BoardProps {
     value: number;
     food: FoodType;
   };
-  snakeCells: Set<number>;
+  snakeCells: Array<number>;
 }
 
 const Board: React.FC<BoardProps> = ({
@@ -50,7 +50,7 @@ const Board: React.FC<BoardProps> = ({
             {row.map((cell) => {
               // Let this be standard cell
               let cellType: any = null;
-              if (snakeCells.has(cell)) {
+              if (snakeCells.includes(cell)) {
                 if (cell === snakeRef.current.head!.data!.value) {
                   cellType = (
                     <HeadCell
