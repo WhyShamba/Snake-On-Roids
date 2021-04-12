@@ -6,6 +6,7 @@ import { MultiplayerSettingsType } from '../../App';
 import { MenuModal } from '../../components/MenuModal';
 import { GetReadyModal } from '../../components/Multiplayer/GetReadyModal';
 import { useCountdown } from '../../custom-hooks/useCountdown';
+import { GameDataType } from '../../types/types';
 import { cacheImages } from '../../utils/cacheImages';
 import MultiplayerGame from './MultiplayerGame';
 
@@ -22,13 +23,23 @@ const MultiplayerWrapper: React.FC<
   MultiplayerSettingsType & {
     cancelGame: () => any;
     boardSettings: MultiplayerSettingsType['settings'];
+    setMultiplayerBoardSettings: (
+      _settings: MultiplayerSettingsType['settings']
+    ) => void;
   }
-> = ({ peer, peerId, connectionPeerId, cancelGame, boardSettings }) => {
+> = ({
+  peer,
+  peerId,
+  connectionPeerId,
+  cancelGame,
+  boardSettings,
+  setMultiplayerBoardSettings,
+}) => {
   const [connection, setConnection] = useState<null | Peer.DataConnection>(
     null
   );
   const { isOpen, onClose, onOpen } = useDisclosure();
-  const { count, resetCount } = useCountdown(3, false, onClose);
+  const { count, resetCount, setCount } = useCountdown(0, false, onClose);
 
   const isCreator = !connectionPeerId;
   useEffect(() => {
@@ -37,11 +48,17 @@ const MultiplayerWrapper: React.FC<
         cacheImages(imagesToPrecache).then(() => {
           conn.on('open', () => {
             setConnection(conn);
-            // Open the modal
-            activateInitialGetReadyModal();
-
             // Send the board settings
             conn.send({ type: 'SET_SETTINGS', boardSettings });
+
+            conn.on('data', (data: GameDataType) => {
+              if (data.type === 'UPDATE_COUNTDOWN') {
+                activateInitialGetReadyModal(); // open modal
+
+                // Syncing counts
+                setCount(data.count);
+              }
+            });
           });
         });
       });
@@ -51,16 +68,32 @@ const MultiplayerWrapper: React.FC<
 
       cacheImages(imagesToPrecache).then(() => {
         conn.on('open', () => {
-          setConnection(conn);
-          activateInitialGetReadyModal();
+          // Wait for settings. The creator might need to wait longer test
+          conn.on('data', (data: GameDataType) => {
+            if (typeof data === 'object' && data.type === 'SET_SETTINGS') {
+              setMultiplayerBoardSettings(data.boardSettings);
+              setConnection(conn);
+              activateInitialGetReadyModal();
+            }
+          });
         });
       });
     }
   }, []);
 
+  useEffect(() => {
+    // if peer is guest
+    if (!isCreator && connection) {
+      // Syncing counts
+      connection.send({ type: 'UPDATE_COUNTDOWN', count });
+    }
+  }, [count]);
+
   const activateInitialGetReadyModal = () => {
     onOpen();
-    resetCount();
+
+    // Syncing counts, only the guest peer when is ready send countdown
+    if (!isCreator) resetCount(3);
   };
 
   return connection ? (
