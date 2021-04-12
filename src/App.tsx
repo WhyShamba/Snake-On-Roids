@@ -116,6 +116,14 @@ function App() {
     }
   };
 
+  const setMultiplayerBoardSettings = (
+    _settings: MultiplayerSettingsType['settings']
+  ) =>
+    setMultiplayerSettings({
+      ...multiplayerSettings,
+      settings: _settings,
+    });
+
   const handleMultiplayer = (connectionPeerId?: string) => {
     const peer = new Peer(generateId());
 
@@ -137,6 +145,7 @@ function App() {
       handleMultiplayer={handleMultiplayer}
     />
   );
+
   if (playGame) {
     component = <Game />;
   } else if (multiplayerSettings?.peer) {
@@ -151,6 +160,7 @@ function App() {
           })
         }
         boardSettings={multiplayerSettings.settings}
+        setMultiplayerBoardSettings={setMultiplayerBoardSettings}
       />
     );
   }
@@ -198,13 +208,7 @@ function App() {
               gameDuration: multiplayerSettings.settings.gameDuration,
               withTimer: multiplayerSettings.settings.withTimer,
               board: multiplayerSettings.settings.board,
-              setMultiplayerBoardSettings: (
-                _settings: MultiplayerSettingsType['settings']
-              ) =>
-                setMultiplayerSettings({
-                  ...multiplayerSettings,
-                  settings: _settings,
-                }),
+              setMultiplayerBoardSettings,
               setBoardSize: (boardSize) =>
                 setMultiplayerSettings(
                   updateObj(multiplayerSettings, {

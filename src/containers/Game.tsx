@@ -4,22 +4,22 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useReducer,
   useRef,
-  useState,
 } from 'react';
 import { AvatarBar } from '../components/AvatarBar';
+import Board from '../components/Board';
 import { Controller } from '../components/Controller';
 import { GameOverModal } from '../components/GameOverModal';
-import {
-  CREATINE_EFFECT_DURATION,
-  FOOD_DURATION,
-  STEROID_EFFECT_DURATION,
-} from '../consts';
 import { MainContext } from '../context';
-import { useCountdown } from '../custom-hooks/useCountdown';
+import { useCountdownInfinete } from '../custom-hooks/useCountdown';
 import { useSetInterval } from '../custom-hooks/useSetInterval';
-import { useSnakeMovement } from '../custom-hooks/useSnakeMovement';
+import { useSnakeMovementImproved } from '../custom-hooks/useSnakeMovement';
+import { mainReducer } from '../store/reducers/snakeReducer';
+import { initialState, timerReducer } from '../store/reducers/timerReducer';
+import { DIRECTION, FoodType, SnakeReducerActionType } from '../types/types';
 import { generateRandomNum } from '../utils/generateRandomNum';
+import { isOutOfBounds } from '../utils/isOutOfBounds';
 import { Node, SingleLinkedList } from '../utils/SingleLinkedList';
 import {
   getSnakeSpeedOnCreatine,
@@ -29,14 +29,15 @@ import {
   getFoodCell,
   getFoodType,
   getInitialSnakeCell,
+  getInitialSnakeProperties,
 } from '../utils/snake/initializers';
+import { getNextNodeForDirection } from '../utils/snake/snake-coordination';
 import {
-  changeDirection,
-  getNextNodeForDirection,
-  getOppositeDirection,
-} from '../utils/snake/snake-coordination';
-import Board from '../components/Board';
-import { FoodType, DIRECTION } from '../types/types';
+  growSnake,
+  removeCells,
+  reverseSnake,
+} from '../utils/snake/snakeManipulationMethods';
+
 const Game = () => {
   // Global game settings
   const {
@@ -45,238 +46,170 @@ const Game = () => {
     disableController,
     board,
   } = useContext(MainContext);
+  const [timerState, timerDispatch] = useReducer(timerReducer, initialState);
+  const [snakeState, snakeDispatch] = useReducer(mainReducer, {
+    ...getInitialSnakeProperties(board, false, false),
+    foodCell: {
+      value: getFoodCell(board),
+      food: getFoodType(),
+    },
+    board,
+    initialSnakeSpeed,
+    isGuest: false,
+    score: 0,
+  });
   const snakeRef = useRef(
     new SingleLinkedList(new Node(getInitialSnakeCell(board)))
   );
-  const [snakeCells, setSnakeCells] = useState(
-    new Set([snakeRef.current.head?.data?.value || 1])
+  const { direction, setDirection } = useSnakeMovementImproved(
+    snakeRef.current.head!.data!.direction,
+    snakeState.snakeCells.length
   );
-  const { direction, setDirection, snakeCellsSizeRef } = useSnakeMovement(
-    snakeRef.current.head!.data!.direction
-  );
-  const [foodCell, setFoodCell] = useState({
-    value: getFoodCell(board),
-    food: getFoodType(),
-  });
-  const steroidConsumedRef = useRef(false);
-  const {
-    count: steroidEffectDuration,
-    resetCount: resetSteroidEffectDuration,
-    cancelCountdown: cancelSteroidEffectDuration,
-  } = useCountdown(0, false, onSteroidEffectOver);
-  const {
-    count: creatineEffectDuration,
-    resetCount: resetCreatineEffectDuration,
-    cancelCountdown: cancelCreatineEffectDuration,
-  } = useCountdown(0, false, onCreatineEffectOver);
+  // Game over modal
   const {
     isOpen: gameOver,
     onOpen: openModal,
     onClose: closeModal,
   } = useDisclosure();
-  const {
-    count: foodDuration,
-    resetCount: resetFoodDuration,
-    cancelCountdown: cancelFoodDuration,
-  } = useCountdown(FOOD_DURATION, true, () => {
-    if (!gameOver) {
-      generateFoodCell();
-      resetFoodDuration();
-    }
-  });
-  const snakeFoodConsumed = useRef<FoodType>();
-  const effects = useRef<{ [food: string]: number | null }>({});
 
+  // Snake speed
   let snakeSpeed = initialSnakeSpeed;
-  if (steroidConsumedRef.current) {
+  if (timerState.currentFoodEffect === 'steroid') {
     snakeSpeed = getSnakeSpeedOnRoids(snakeSpeed);
-  } else if (
-    snakeFoodConsumed.current === 'creatine' ||
-    creatineEffectDuration
-  ) {
+  } else if (timerState.currentFoodEffect === 'creatine') {
     snakeSpeed = getSnakeSpeedOnCreatine(snakeSpeed);
   }
 
   useSetInterval(() => {
-    if (!gameOver) moveSnake();
+    if (!gameOver) onMove();
   }, snakeSpeed);
 
+  const { startTicks, stopTicks } = useCountdownInfinete(
+    () =>
+      timerDispatch({
+        type: 'TICK',
+      }),
+    true
+  );
+
   useEffect(() => {
-    if (
-      steroidEffectDuration &&
-      steroidEffectDuration !== effects.current['steroid']
-    ) {
-      effects.current['steroid'] = steroidEffectDuration;
+    if (gameOver) {
+      stopTicks();
+    } else {
+      startTicks();
     }
-    if (
-      creatineEffectDuration &&
-      creatineEffectDuration !== effects.current['creatine']
-    ) {
-      effects.current['creatine'] = creatineEffectDuration;
+  }, [gameOver]);
+
+  // Handle timer
+  useEffect(() => {
+    const foodDuration = timerState.foodCount;
+    const { creatine, steroid } = timerState.effectsCount;
+
+    if (foodDuration === 0 && !gameOver) {
+      // generateFoodCell();
+      snakeDispatch({ type: 'GENERATE_FOOD_CELL' });
     }
-  }, [steroidEffectDuration, creatineEffectDuration]);
+
+    if (creatine === 0) {
+      onCreatineEffectOver();
+    }
+
+    if (steroid === 0) {
+      onSteroidEffectOver();
+    }
+  }, [timerState.foodCount, timerState.effectsCount]);
 
   const snake = snakeRef.current;
 
-  const isOutOfBounds = () => {
-    switch (direction) {
-      case DIRECTION.RIGHT:
-        if (snake.head!.data!.cell + 1 === board[0].length) {
-          gameOverHandler();
-          return true;
-        }
-        break;
-      case DIRECTION.LEFT:
-        if (snake.head!.data!.cell - 1 < 0) {
-          gameOverHandler();
-          return true;
-        }
-        break;
-      case DIRECTION.UP:
-        if (snake.head!.data!.row - 1 < 0) {
-          gameOverHandler();
-          return true;
-        }
-        break;
-      default:
-        // case DIRECTION.DOWN
-        if (snake.head!.data!.row + 1 === board[0].length) {
-          gameOverHandler();
-          return true;
-        }
-        break;
-    }
-    return false;
-  };
-
-  const moveSnake = () => {
-    if (!isOutOfBounds()) {
+  const onMove = () => {
+    if (!isOutOfBounds(direction, snake, board)) {
       const newNode = getNextNodeForDirection(snake.head!, direction, board);
 
       // If it's not colliding
-      if (!snakeCells.has(newNode.data!.value)) {
-        const newSnakeCells = changeDirection(newNode, snake, snakeCells);
+      if (
+        !snakeState.snakeCells.includes(newNode.data!.value)
+        // &&
+        // !snakeState.enemy?.snakeCells.includes(newNode.data!.value)
+      ) {
+        // remove tail
+        let newSnakeCells = snakeState.snakeCells.filter(
+          (cellValue) => cellValue !== snake.tail?.data.value
+        );
 
-        const foodConsumed = newNode.data!.value === foodCell.value;
+        // add new head
+        newSnakeCells.push(newNode.data.value);
+
+        // fix links in snake
+        snake.moveList(newNode);
+
+        const foodConsumed = newNode.data.value === snakeState.foodCell.value;
         if (foodConsumed) {
-          consumeFood(newSnakeCells);
+          // Consume food
+          snakeDispatch(onFoodConsumption(newSnakeCells));
+          return;
         }
-
-        snakeCellsSizeRef.current = newSnakeCells.size;
-
-        setSnakeCells(newSnakeCells);
+        snakeDispatch({
+          type: 'MOVE_SNAKE',
+          newSnakeCells,
+          newScore: newSnakeCells.length - 1,
+          foodEaten: null,
+        });
       } else {
-        // oncollision
         gameOverHandler();
       }
+    } else {
+      gameOverHandler();
     }
   };
 
-  const generateFoodCell = () => {
-    // TODO: WRITE ALGORITHAM THAT REMOVES THE VALUES WHERE THE SNAKE IS FROM THE BOARD IT SELF, BECAUSE IF SNAKE GETS TOO BIG IT WILL BE IMPOSSIBLE, LAG TO GENERATE RANDDOM NUM, SINCE THE SNAKE WILL COVER EVERYTHING
-    // Generate food cell at random position
-    let value = getFoodCell(board);
+  const onFoodConsumption = (
+    newSnakeCells: number[]
+  ): SnakeReducerActionType => {
+    let foodEaten: FoodType | null = null;
 
-    while (snakeCells.has(value) || value === foodCell.value) {
-      value = getFoodCell(board);
-    }
-
-    let food: FoodType = getFoodType();
-
-    setFoodCell({
-      food,
-      value,
-    });
-  };
-
-  function gameOverHandler() {
-    openModal();
-    cancelFoodDuration();
-
-    // Turn off effects
-    if (steroidConsumedRef.current) {
-      steroidConsumedRef.current = false;
-
-      cancelSteroidEffectDuration();
-    }
-    if (creatineEffectDuration) {
-      cancelCreatineEffectDuration();
-    }
-
-    // delete effects.current['steroid'];
-    // delete effects.current['creatine'];
-    // delete effects.current['meat'];
-    // delete effects.current['protein'];
-    effects.current = {};
-  }
-
-  function removeCells(count: number) {
-    const newSnakeCells = new Set(snakeCells);
-
-    const removeCellsNumber =
-      newSnakeCells.size - count > 1 ? newSnakeCells.size - count : 1;
-    while (newSnakeCells.size !== removeCellsNumber) {
-      const removedTail = snake.deque();
-      newSnakeCells.delete(removedTail!.data!.value);
-    }
-
-    steroidConsumedRef.current = false;
-    setSnakeCells(newSnakeCells);
-  }
-
-  function growSnake(newSnakeCells: Set<number>) {
-    const oppositeDirOfTail = getOppositeDirection(snake.tail!.data!.direction);
-    const newTailNode = getNextNodeForDirection(
-      snake.tail!,
-      oppositeDirOfTail,
-      board
-    );
-
-    // After creation of new node make sure the direction is set to the appropriate directiont
-    newTailNode.data!.direction = snake.tail!.data!.direction;
-    // Insertion at beginning of tail
-    const temp = snake.tail;
-    snake.tail = newTailNode;
-    snake.tail.next = temp;
-
-    newSnakeCells.add(newTailNode.data!.value);
-  }
-
-  // Grow the snake and do the effect
-  const consumeFood = (newSnakeCells: Set<number>) => {
-    if (foodCell.food === 'protein' || foodCell.food === 'meat') {
-      growSnake(newSnakeCells);
-
-      effects.current[foodCell.food] = Infinity;
-
-      snakeFoodConsumed.current = 'protein';
-    } else if (foodCell.food === 'creatine') {
-      growSnake(newSnakeCells);
+    // Consume food
+    if (
+      snakeState.foodCell.food === 'protein' ||
+      snakeState.foodCell.food === 'meat'
+    ) {
+      newSnakeCells = growSnake(snake, board, newSnakeCells);
+    } else if (snakeState.foodCell.food === 'creatine') {
+      newSnakeCells = growSnake(snake, board, newSnakeCells);
 
       // Add the effects
-      if (!steroidConsumedRef.current) {
-        reverseSnake();
-        resetCreatineEffectDuration(CREATINE_EFFECT_DURATION);
+      if (timerState.currentFoodEffect !== 'steroid') {
+        reverseSnake(snake);
 
-        // Add the duration
-        effects.current['creatine'] = CREATINE_EFFECT_DURATION;
+        setDirection(snake.head?.data.direction!, false);
       }
-
-      snakeFoodConsumed.current = 'creatine';
-    } else if (foodCell.food === 'steroid') {
+    } else if (snakeState.foodCell.food === 'steroid') {
       for (let index = 0; index < 2; index++) {
-        growSnake(newSnakeCells);
+        newSnakeCells = growSnake(snake, board, newSnakeCells);
       }
-
-      snakeFoodConsumed.current = 'steroid';
-      steroidConsumedRef.current = true;
-      resetSteroidEffectDuration(STEROID_EFFECT_DURATION);
     }
+    foodEaten = snakeState.foodCell.food;
 
-    resetFoodDuration();
-    // generate new food cell
-    generateFoodCell();
+    //   Reset timer for that food and global timer since food was confused
+    timerDispatch({
+      type: 'CONSUME_FOOD',
+      food: snakeState.foodCell.food,
+    });
+
+    return {
+      type: 'MOVE_SNAKE',
+      foodEaten,
+      newSnakeCells,
+      newScore: newSnakeCells.length - 1,
+    };
   };
+
+  // Game over and play again methods
+  function gameOverHandler() {
+    // Turn off effects
+    timerDispatch({ type: 'GAME_OVER' });
+
+    openModal();
+  }
 
   // Reset the game to initial state
   const playAgain = () => {
@@ -284,60 +217,25 @@ const Game = () => {
       new Node(getInitialSnakeCell(board))
     );
 
-    // setSnakeCells(new Set([snake.head!.data!.value]));
-    setSnakeCells(new Set([snakeRef.current.head!.data!.value]));
-
-    const newFoodCell = {
-      value: getFoodCell(board),
-      food: getFoodType(),
-    };
-    setFoodCell(newFoodCell);
-    snakeFoodConsumed.current = undefined;
+    timerDispatch({ type: 'PLAY_AGAIN' });
+    snakeDispatch({ type: 'PLAY_AGAIN' });
 
     setDirection(generateRandomNum(0, 3));
-
-    resetFoodDuration();
 
     closeModal();
   };
 
-  // Side effects that can happen
-  function onCreatineEffectOver() {
-    delete effects.current['creatine'];
-
-    if (!steroidConsumedRef.current && !gameOver) {
-      // Side effects for creatine
-      reverseSnake();
-    }
-  }
-
-  function onSteroidEffectOver() {
-    if (!gameOver) {
-      delete effects.current['steroid'];
-
-      if (steroidConsumedRef.current && snakeCells.size > 1) {
-        // console.log(
-        //   `Mssg to display: You haven't consumed steroids in the last 30 sec, you will shrink`
-        // );
-
-        removeCells(3);
-      }
-    }
-  }
-
-  const score = snakeCells.size - 1;
-
   return (
     <>
       <AvatarBar
-        effects={effects.current}
-        score={score}
-        untilNextFood={foodDuration}
+        effects={timerState.effectsCount}
+        score={snakeState.score}
+        untilNextFood={timerState.foodCount}
       />
       <Board
         board={board}
-        foodCell={foodCell}
-        snakeCells={snakeCells}
+        foodCell={snakeState.foodCell}
+        snakeCells={snakeState.snakeCells}
         snakeRef={snakeRef}
       />
       <Controller
@@ -351,30 +249,29 @@ const Game = () => {
       <GameOverModal
         isOpen={gameOver}
         onClose={closeModal}
-        score={score}
+        score={snakeState.score}
         onPlayAgain={playAgain}
         onMenuClick={togglePlayGame}
       />
     </>
   );
 
-  function reverseSnake() {
-    snake.reverse((reversedNode) => {
-      // Algorithm for determining which node is transitional and adding the right direction to it. Check the SingleLinkedList test case for detailed explanation
-      const nextNodeDirection = reversedNode.next?.data?.direction;
-      const currentNodeDirection = reversedNode.data!.direction;
-      const isTransitional = currentNodeDirection !== nextNodeDirection;
+  // Side effects that can happen
+  function onCreatineEffectOver() {
+    if (timerState.currentFoodEffect !== 'steroid' && !gameOver) {
+      // Side effects for creatine
+      reverseSnake(snake);
+      setDirection(snake.head!.data.direction);
+    }
+  }
 
-      if (isTransitional && nextNodeDirection !== undefined) {
-        reversedNode.data!.direction = getOppositeDirection(nextNodeDirection);
-      } else {
-        reversedNode.data!.direction = getOppositeDirection(
-          currentNodeDirection
-        );
+  function onSteroidEffectOver() {
+    if (!gameOver) {
+      if (snakeState.snakeCells.length > 1) {
+        const newSnakeCells = removeCells(snakeState.snakeCells, snake, 3);
+        snakeDispatch({ type: 'STEROID_SIDE_EFFECT', newSnakeCells });
       }
-    });
-
-    setDirection(snake.head!.data!.direction, false);
+    }
   }
 };
 

@@ -1,6 +1,26 @@
 import { CellData, DIRECTION, FoodType } from '../../types/types';
 import { generateRandomNum } from '../generateRandomNum';
+import { Node, SingleLinkedList } from '../SingleLinkedList';
 
+export const getInitialSnakeProperties = (
+  board: number[][],
+  isGuest: boolean,
+  multiplayer: boolean = true
+) => {
+  const head = multiplayer
+    ? new Node(getInitialSnakeCellMultiplayer(board, isGuest))
+    : new Node(getInitialSnakeCell(board));
+
+  return {
+    snake: new SingleLinkedList(head),
+    snakeCells: [head.data.value],
+    direction: head.data.direction,
+    consumption: {
+      creatine: false,
+      steroid: false,
+    },
+  };
+};
 // Now into consideration we have that the rows and column will have same number of rows/columns
 export const getInitialSnakeCell = (board: number[][]): CellData => {
   const row = Math.floor(board.length / 2) - 1;
