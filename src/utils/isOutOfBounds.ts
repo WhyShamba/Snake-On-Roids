@@ -1,7 +1,4 @@
-import {
-  DIRECTION,
-  SnakeType,
-} from '/home/bazhe/Desktop/projects/snake-on-roids/src/types/types';
+import { DIRECTION, SnakeType } from '../types/types';
 
 export function isOutOfBounds(
   direction: DIRECTION,
