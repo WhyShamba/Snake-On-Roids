@@ -41,16 +41,6 @@ export type GameDataType =
 export type DataType =
   | 'PLAY_AGAIN'
   | 'LOST'
-  | { type: 'TIME_EXPIRED'; score: number }
-  | {
-      type: 'MOVE_SNAKE';
-      payload: string;
-    };
-
-export type DataTypeNew =
-  | 'LOST'
-  | 'PLAY_AGAIN'
-  | { type: 'TIME_EXPIRED'; score: number }
   | {
       type: 'MOVE_SNAKE';
       payload: string;
@@ -100,6 +90,7 @@ export type SnakeReducerActionType =
 
 export type CountReducerType = {
   foodCount: number;
+  gameCountDown?: number;
   effectsCount: {
     steroid?: number;
     creatine?: number;
@@ -111,7 +102,11 @@ export type CountReducerType = {
 
 export type CountReducerActionType =
   | {
-      type: 'RESET_FOOD_TIMER' | 'GAME_OVER' | 'PLAY_AGAIN';
+      type: 'RESET_FOOD_TIMER' | 'GAME_OVER' | 'RESET_GAME_COUNTDOWN';
+    }
+  | {
+      type: 'PLAY_AGAIN';
+      gameCountDown?: number;
     }
   | {
       type: 'RESET_SPECIFIC_FOOD_TIMER' | 'CLEAR_SPECIFIC_FOOD_TIMER';
@@ -127,7 +122,7 @@ export type CountReducerActionType =
 
 export type GameReducerStateType = {
   gameOver: boolean;
-  playerWon: boolean;
+  playerWon: boolean | 'draw';
   multiplayerStats: {
     playAgain: {
       approved: boolean;
@@ -144,7 +139,12 @@ export type GameReducerStateType = {
 
 export type GameReducerActionType =
   | {
-      type: 'GAME_OVER' | 'PLAY_AGAIN' | 'ON_PLAYER_WIN' | 'ON_PLAYER_LOSS';
+      type:
+        | 'GAME_OVER'
+        | 'PLAY_AGAIN'
+        | 'ON_PLAYER_WIN'
+        | 'ON_PLAYER_LOSS'
+        | 'ON_PLAYER_DRAW';
     }
   | {
       type: 'SET_GAME_OVER';

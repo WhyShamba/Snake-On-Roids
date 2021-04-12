@@ -111,7 +111,8 @@ export const Multiplayer: React.FC<MultiplayerProps> = ({
                   size='lg'
                   mb={4}
                   onChange={ctx.multiplayer.toggleWithTimer}
-                  checked={ctx.multiplayer.withTimer}
+                  isChecked={ctx.multiplayer.withTimer}
+                  colorScheme='red'
                 />
                 <FormControl isDisabled={!ctx.multiplayer.withTimer}>
                   <FormLabel>
@@ -125,6 +126,9 @@ export const Multiplayer: React.FC<MultiplayerProps> = ({
                     }
                     value={ctx.multiplayer.gameDuration.toString()}
                   >
+                    <option style={{ background: '#171717' }} value='20'>
+                      20 seconds
+                    </option>
                     <option style={{ background: '#171717' }} value='45'>
                       45 seconds
                     </option>
@@ -157,8 +161,10 @@ export const Multiplayer: React.FC<MultiplayerProps> = ({
                 <Switch
                   size='lg'
                   onClick={ctx.multiplayer.toggleBetterPerf as any}
-                  checked={ctx.multiplayer.betterPerf || true}
+                  isChecked={ctx.multiplayer.betterPerf || true}
                   defaultChecked={true}
+                  colorScheme='red'
+                  isDisabled
                 />
                 <Text fontSize='md' ml={4}>
                   If checked, your game might be laggy depending on your

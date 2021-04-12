@@ -17,7 +17,7 @@ interface GameOverModalProps {
   score: number;
   onPlayAgain?: (...args: any) => any;
   onMenuClick?: (...args: any) => any;
-  playerWon: boolean;
+  playerWon: boolean | 'draw';
   loading: boolean;
 }
 
@@ -49,7 +49,8 @@ export const GameOverModalMultiplayer: React.FC<GameOverModalProps> = ({
         w='90%'
       >
         <ModalHeader textAlign='center' fontSize='3xl'>
-          Game Over! You {playerWon ? 'WON' : 'LOST'}
+          Game Over! You{' '}
+          {playerWon === 'draw' ? playerWon : playerWon ? 'WON' : 'LOST'}
         </ModalHeader>
         <ModalBody pb={6}>
           <Text textAlign='center' mb={6} fontWeight={600} fontSize='2xl'>

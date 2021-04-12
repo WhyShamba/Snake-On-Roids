@@ -14,7 +14,7 @@ export const gameStoreInitialState = {
       scoreEnemy: 0,
     },
   },
-  gameOver: false,
+  gameOver: true,
   playerWon: false,
 };
 
@@ -79,6 +79,10 @@ export const gameReducer = (
         draft.gameOver = true;
         draft.playerWon = true;
         draft.multiplayerStats.scores.scoreMe += 1;
+        break;
+      case 'ON_PLAYER_DRAW':
+        draft.gameOver = true;
+        draft.playerWon = 'draw';
         break;
 
       default:

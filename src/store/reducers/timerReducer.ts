@@ -12,6 +12,15 @@ export const initialState: CountReducerType = {
   currentFoodEffect: null,
 };
 
+export const initializeTimerReducerInitialState = (
+  gameCountDown?: number
+): CountReducerType => ({
+  foodCount: FOOD_DURATION,
+  effectsCount: {},
+  currentFoodEffect: null,
+  gameCountDown,
+});
+
 export const timerReducer = (
   state: CountReducerType,
   action: CountReducerActionType
@@ -39,6 +48,7 @@ export const timerReducer = (
           }
         }
 
+        // Steroid
         if (draft.effectsCount.steroid !== undefined) {
           if (draft.effectsCount.steroid > 0) {
             draft.effectsCount.steroid -= 1;
@@ -48,13 +58,29 @@ export const timerReducer = (
               draft.effectsCount.creatine! > 0 ? 'creatine' : null;
           }
         }
+
+        // Game countdown
+        if (draft.gameCountDown !== undefined) {
+          if (draft.gameCountDown > 0) {
+            draft.gameCountDown -= 1;
+          } else {
+            draft.gameCountDown = undefined;
+          }
+        }
       });
 
       return stateAfterTick;
+
     case 'RESET_FOOD_TIMER':
       return {
         ...state,
         foodCount: FOOD_DURATION,
+      };
+
+    case 'RESET_GAME_COUNTDOWN':
+      return {
+        ...state,
+        gameCountDown: state.gameCountDown,
       };
 
     case 'GAME_OVER':
@@ -63,7 +89,10 @@ export const timerReducer = (
       };
 
     case 'PLAY_AGAIN':
-      return initialState;
+      return {
+        ...initialState,
+        gameCountDown: action.gameCountDown,
+      };
 
     case 'RESET_SPECIFIC_FOOD_TIMER':
       const newStateAfterReset = produce(state, (draft) => {
@@ -107,22 +136,6 @@ export const timerReducer = (
       });
       return newStateAfterConsumptoin;
 
-    // case 'CLEAR_SPECIFIC_FOOD_TIMER':
-    //   const newStateAfterClear = produce(state, (draft) => {
-    //     switch (action.food) {
-    //       case 'creatine':
-    //         draft.effectsCount.creatine = undefined;
-    //         break;
-    //       case 'steroid':
-    //         draft.effectsCount.steroid = undefined;
-    //         break;
-    //       default:
-    //         // meat and protein
-    //         draft.effectsCount[action.food] = undefined;
-    //         break;
-    //     }
-    //   });
-    //   return newStateAfterClear;
     default:
       return state;
   }

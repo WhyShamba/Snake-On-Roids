@@ -7,17 +7,13 @@ import React, {
   useEffect,
   useReducer,
   useRef,
-  useState,
 } from 'react';
 import { AvatarBar } from '../../components/AvatarBar';
 import { Controller } from '../../components/Controller';
 import { GameOverModalMultiplayer } from '../../components/Multiplayer/GameOverModalMultiplayer';
 import MultiplayerBoard from '../../components/Multiplayer/MultiplayerBoard';
 import { MainContext } from '../../context';
-import {
-  useCountdown,
-  useCountdownInfinete,
-} from '../../custom-hooks/useCountdown';
+import { useCountdownInfinete } from '../../custom-hooks/useCountdown';
 import { useSetInterval } from '../../custom-hooks/useSetInterval';
 import { useSnakeMovementImproved } from '../../custom-hooks/useSnakeMovement';
 import {
@@ -25,7 +21,10 @@ import {
   gameStoreInitialState,
 } from '../../store/reducers/gameReducer';
 import { mainReducer } from '../../store/reducers/snakeReducer';
-import { initialState, timerReducer } from '../../store/reducers/timerReducer';
+import {
+  initializeTimerReducerInitialState,
+  timerReducer,
+} from '../../store/reducers/timerReducer';
 import {
   DataType,
   DIRECTION,
@@ -82,7 +81,10 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
     },
   } = useContext(MainContext);
   // Snake state
-  const [timerState, timerDispatch] = useReducer(timerReducer, initialState);
+  const [timerState, timerDispatch] = useReducer(
+    timerReducer,
+    initializeTimerReducerInitialState(gameDuration)
+  );
   const [{ gameOver, ...gameState }, gameDispatch] = useReducer(
     gameReducer,
     gameStoreInitialState
@@ -111,13 +113,6 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
   const { isOpen, onOpen: openModal, onClose: closeModal } = useDisclosure();
   // Multiplayer
   const toast = useToast();
-  // Handle the gameCountdown
-  const {
-    cancelCountdown: cancelGameCountdown,
-    count: gameCountdown,
-    startCount: startGameCountdown,
-    resetCount: resetGameCountdown,
-  } = useCountdown(gameDuration, false, sendTimeExpiredSignal);
   // Timer for TICKs
   const { startTicks, stopTicks } = useCountdownInfinete(
     () =>
@@ -136,7 +131,7 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
   }
 
   useSetInterval(() => {
-    if (!gameOver) onMove();
+    if (!gameOver && startGame) onMove();
   }, snakeSpeed);
 
   // Used for handling counting model etc etc
@@ -164,9 +159,6 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
 
   // Handling the multiplayer, on data recieve
   useEffect(() => {
-    if (withTimer) {
-      startGameCountdown();
-    }
     connection.on('data', (data: DataType) => {
       if (data === 'LOST') {
         onPlayerWin();
@@ -202,15 +194,6 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
               enemyFoodCell: foodCell,
             });
             break;
-
-          case 'TIME_EXPIRED':
-            if (data.score >= snakeState.score) {
-              onPlayerWin();
-            } else {
-              onPlayerLoss();
-            }
-            break;
-
           default:
             break;
         }
@@ -270,6 +253,10 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
 
     if (steroid === 0) {
       onSteroidEffectOver();
+    }
+
+    if (timerState.gameCountDown === 0) {
+      onGameCountDownover();
     }
   }, [timerState.foodCount, timerState.effectsCount]);
 
@@ -369,15 +356,16 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
     gameOverHandler();
   };
 
+  const onPlayerDraw = () => {
+    gameDispatch({ type: 'ON_PLAYER_DRAW' });
+    gameOverHandler();
+  };
+
   function gameOverHandler() {
     gameDispatch({ type: 'GAME_OVER' });
 
     // Turn off effects
     timerDispatch({ type: 'GAME_OVER' });
-
-    if (withTimer) {
-      cancelGameCountdown();
-    }
 
     // setGameOver(true);
     openModal();
@@ -393,12 +381,8 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
     );
 
     gameDispatch({ type: 'PLAY_AGAIN' });
-    timerDispatch({ type: 'PLAY_AGAIN' });
+    timerDispatch({ type: 'PLAY_AGAIN', gameCountDown: gameDuration });
     snakeDispatch({ type: 'PLAY_AGAIN', sendInitialSnakePosition });
-
-    if (withTimer) {
-      resetGameCountdown();
-    }
 
     setDirection(generateDirectionMultiplayer(isGuest));
 
@@ -431,7 +415,7 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
       >
         {withTimer && (
           <Text top={-16} pos='absolute' fontSize='lg'>
-            Game Ends In: {gameCountdown}
+            Game Ends In: {timerState.gameCountDown}
           </Text>
         )}
         <Text top={-8} pos='absolute' fontSize='lg'>
@@ -508,12 +492,12 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
     connection.send('PLAY_AGAIN');
   }
 
-  function sendTimeExpiredSignal() {
-    connection.send({
-      type: 'TIME_EXPIRED',
-      score: snakeState.snakeCells.length - 1,
-    });
-  }
+  // function sendTimeExpiredSignal() {
+  //   connection.send({
+  //     type: 'TIME_EXPIRED',
+  //     score: snakeState.snakeCells.length - 1,
+  //   });
+  // }
   // Side effects that can happen
   function onCreatineEffectOver() {
     if (timerState.currentFoodEffect !== 'steroid' && !gameOver) {
@@ -528,6 +512,21 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
       if (snakeState.snakeCells.length > 1) {
         const newSnakeCells = removeCells(snakeState.snakeCells, snake, 3);
         snakeDispatch({ type: 'STEROID_SIDE_EFFECT', newSnakeCells });
+      }
+    }
+  }
+
+  function onGameCountDownover() {
+    if (snakeState.enemy?.snakeCells) {
+      // This will send lost signal, and the other peer will add a point to enemy by calling onPlayerWin()
+      if (snakeState.snakeCells.length < snakeState.enemy?.snakeCells?.length) {
+        // On this peer it will count as a loss, and on other peer it will give count to enemy
+        onPlayerLoss();
+      } else if (
+        snakeState.snakeCells.length === snakeState.enemy?.snakeCells?.length
+      ) {
+        // Draw, add points to both sides
+        onPlayerDraw();
       }
     }
   }
