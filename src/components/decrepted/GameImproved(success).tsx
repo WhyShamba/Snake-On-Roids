@@ -31,7 +31,7 @@ import {
   getOppositeDirection,
 } from '../../utils/snake/snake-coordination';
 import { AvatarBar } from '../AvatarBar';
-import Board from '../Board';
+import Board from './Board(decrepted)';
 import { Controller } from '../Controller';
 import { GameOverModal } from '../GameOverModal';
 
