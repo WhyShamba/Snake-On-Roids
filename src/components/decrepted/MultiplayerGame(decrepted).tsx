@@ -176,12 +176,6 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
             break;
 
           default:
-            // case 'TIME_EXPIRED':
-            if (data.score >= snakeCells.size - 1) {
-              onPlayerWin();
-            } else {
-              onPlayerLose();
-            }
             break;
         }
       }
