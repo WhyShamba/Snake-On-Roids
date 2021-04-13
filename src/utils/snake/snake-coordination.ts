@@ -57,10 +57,10 @@ export function getNextNodeForDirection(
   direction: DIRECTION,
   board: number[][]
 ) {
+  console.log('Used direction: ', direction);
   const nextNodeCoords = getNextNodeCoordsForDirection(node, direction);
   return new Node<CellData>({
     ...nextNodeCoords,
-    // TODO: HANDLE THIS BETTER
     value: board[nextNodeCoords.row]?.[nextNodeCoords.cell],
     direction,
   });

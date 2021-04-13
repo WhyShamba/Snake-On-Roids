@@ -5,20 +5,32 @@ import {
   STEROID_EFFECT_DURATION,
 } from '../../consts';
 import { CountReducerActionType, CountReducerType } from '../../types/types';
+import {
+  getSnakeSpeedOnCreatine,
+  getSnakeSpeedOnRoids,
+} from '../../utils/snake/calculateSnakeSpeed';
 
-export const initialState: CountReducerType = {
+export const initialState: Omit<
+  CountReducerType,
+  'initialSnakeSpeed' | 'snakeSpeed'
+> = {
   foodCount: FOOD_DURATION,
   effectsCount: {},
   currentFoodEffect: null,
+  // snakeSpeed: 1000,
+  // initialSnakeSpeed: 1000,
 };
 
 export const initializeTimerReducerInitialState = (
+  snakeSpeed: number,
   gameCountDown?: number
 ): CountReducerType => ({
   foodCount: FOOD_DURATION,
   effectsCount: {},
   currentFoodEffect: null,
   gameCountDown,
+  snakeSpeed,
+  initialSnakeSpeed: snakeSpeed,
 });
 
 export const timerReducer = (
@@ -32,7 +44,6 @@ export const timerReducer = (
           draft.foodCount -= 1;
         } else {
           // When timer is over
-          // action.snakeDispatch({ type: 'GENERATE_FOOD_CELL' });
           draft.foodCount = initialState.foodCount;
         }
 
@@ -54,8 +65,16 @@ export const timerReducer = (
             draft.effectsCount.steroid -= 1;
           } else {
             draft.effectsCount.steroid = undefined;
-            draft.currentFoodEffect =
-              draft.effectsCount.creatine! > 0 ? 'creatine' : null;
+            if (draft.effectsCount.creatine! > 0) {
+              // Creatine is still in effect
+              draft.snakeSpeed = getSnakeSpeedOnCreatine(
+                draft.initialSnakeSpeed
+              );
+              draft.currentFoodEffect = 'creatine';
+            } else {
+              draft.snakeSpeed = draft.initialSnakeSpeed;
+              draft.currentFoodEffect = null;
+            }
           }
         }
 
@@ -84,13 +103,11 @@ export const timerReducer = (
       };
 
     case 'GAME_OVER':
-      return {
-        ...initialState,
-      };
+      return initializeTimerReducerInitialState(state.initialSnakeSpeed);
 
     case 'PLAY_AGAIN':
       return {
-        ...initialState,
+        ...initializeTimerReducerInitialState(state.initialSnakeSpeed),
         gameCountDown: action.gameCountDown,
       };
 
@@ -119,11 +136,15 @@ export const timerReducer = (
 
             // If not under the effect of steroid
             if (draft.currentFoodEffect !== 'steroid') {
+              draft.snakeSpeed = getSnakeSpeedOnCreatine(
+                draft.initialSnakeSpeed
+              );
               draft.currentFoodEffect = 'creatine';
             }
             break;
           case 'steroid':
             draft.effectsCount.steroid = STEROID_EFFECT_DURATION;
+            draft.snakeSpeed = getSnakeSpeedOnRoids(draft.initialSnakeSpeed);
             draft.currentFoodEffect = 'steroid';
             break;
           default:

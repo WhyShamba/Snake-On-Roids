@@ -16,15 +16,14 @@ import { useCountdownInfinete } from '../custom-hooks/useCountdown';
 import { useSetInterval } from '../custom-hooks/useSetInterval';
 import { useSnakeMovementImproved } from '../custom-hooks/useSnakeMovement';
 import { mainReducer } from '../store/reducers/snakeReducer';
-import { initialState, timerReducer } from '../store/reducers/timerReducer';
+import {
+  initializeTimerReducerInitialState,
+  timerReducer,
+} from '../store/reducers/timerReducer';
 import { DIRECTION, FoodType, SnakeReducerActionType } from '../types/types';
 import { generateRandomNum } from '../utils/generateRandomNum';
 import { isOutOfBounds } from '../utils/isOutOfBounds';
 import { Node, SingleLinkedList } from '../utils/SingleLinkedList';
-import {
-  getSnakeSpeedOnCreatine,
-  getSnakeSpeedOnRoids,
-} from '../utils/snake/calculateSnakeSpeed';
 import {
   getFoodCell,
   getFoodType,
@@ -46,7 +45,10 @@ const Game = () => {
     disableController,
     board,
   } = useContext(MainContext);
-  const [timerState, timerDispatch] = useReducer(timerReducer, initialState);
+  const [timerState, timerDispatch] = useReducer(
+    timerReducer,
+    initializeTimerReducerInitialState(initialSnakeSpeed)
+  );
   const [snakeState, snakeDispatch] = useReducer(mainReducer, {
     ...getInitialSnakeProperties(board, false, false),
     foodCell: {
@@ -61,6 +63,7 @@ const Game = () => {
   const snakeRef = useRef(
     new SingleLinkedList(new Node(getInitialSnakeCell(board)))
   );
+  const snakeCellsToBeRemoved = useRef<number[]>(); // Helps with snake reducer state collision (when multiple dispatches are done at once)
   const { direction, setDirection } = useSnakeMovementImproved(
     snakeRef.current.head!.data!.direction,
     snakeState.snakeCells.length
@@ -72,17 +75,9 @@ const Game = () => {
     onClose: closeModal,
   } = useDisclosure();
 
-  // Snake speed
-  let snakeSpeed = initialSnakeSpeed;
-  if (timerState.currentFoodEffect === 'steroid') {
-    snakeSpeed = getSnakeSpeedOnRoids(snakeSpeed);
-  } else if (timerState.currentFoodEffect === 'creatine') {
-    snakeSpeed = getSnakeSpeedOnCreatine(snakeSpeed);
-  }
-
   useSetInterval(() => {
     if (!gameOver) onMove();
-  }, snakeSpeed);
+  }, timerState.snakeSpeed);
 
   const { startTicks, stopTicks } = useCountdownInfinete(
     () =>
@@ -119,28 +114,35 @@ const Game = () => {
     }
   }, [timerState.foodCount, timerState.effectsCount]);
 
-  const snake = snakeRef.current;
+  // const snake = snakeRef.current;
 
   const onMove = () => {
-    if (!isOutOfBounds(direction, snake, board)) {
-      const newNode = getNextNodeForDirection(snake.head!, direction, board);
+    if (!isOutOfBounds(direction, snakeRef.current, board)) {
+      const newNode = getNextNodeForDirection(
+        snakeRef.current.head!,
+        direction,
+        board
+      );
 
       // If it's not colliding
-      if (
-        !snakeState.snakeCells.includes(newNode.data!.value)
-        // &&
-        // !snakeState.enemy?.snakeCells.includes(newNode.data!.value)
-      ) {
+      if (!snakeState.snakeCells.includes(newNode.data!.value)) {
         // remove tail
-        let newSnakeCells = snakeState.snakeCells.filter(
-          (cellValue) => cellValue !== snake.tail?.data.value
-        );
+        let newSnakeCells = snakeState.snakeCells.filter((cellValue) => {
+          if (cellValue === snakeRef.current.tail?.data.value) return false;
+          if (
+            snakeCellsToBeRemoved.current &&
+            snakeCellsToBeRemoved.current.includes(cellValue)
+          )
+            return false;
+          return true;
+        });
+        snakeCellsToBeRemoved.current = undefined;
 
         // add new head
         newSnakeCells.push(newNode.data.value);
 
-        // fix links in snake
-        snake.moveList(newNode);
+        // fix links in snakeRef.current
+        snakeRef.current.moveList(newNode);
 
         const foodConsumed = newNode.data.value === snakeState.foodCell.value;
         if (foodConsumed) {
@@ -172,19 +174,19 @@ const Game = () => {
       snakeState.foodCell.food === 'protein' ||
       snakeState.foodCell.food === 'meat'
     ) {
-      newSnakeCells = growSnake(snake, board, newSnakeCells);
+      newSnakeCells = growSnake(snakeRef.current, board, newSnakeCells);
     } else if (snakeState.foodCell.food === 'creatine') {
-      newSnakeCells = growSnake(snake, board, newSnakeCells);
+      newSnakeCells = growSnake(snakeRef.current, board, newSnakeCells);
 
       // Add the effects
       if (timerState.currentFoodEffect !== 'steroid') {
-        reverseSnake(snake);
+        reverseSnake(snakeRef.current);
 
-        setDirection(snake.head?.data.direction!, false);
+        setDirection(snakeRef.current.head?.data.direction!, false);
       }
     } else if (snakeState.foodCell.food === 'steroid') {
       for (let index = 0; index < 2; index++) {
-        newSnakeCells = growSnake(snake, board, newSnakeCells);
+        newSnakeCells = growSnake(snakeRef.current, board, newSnakeCells);
       }
     }
     foodEaten = snakeState.foodCell.food;
@@ -237,6 +239,7 @@ const Game = () => {
         foodCell={snakeState.foodCell}
         snakeCells={snakeState.snakeCells}
         snakeRef={snakeRef}
+        snakeCellsToBeRemoved={snakeCellsToBeRemoved.current}
       />
       <Controller
         changeDirection={useCallback(
@@ -260,16 +263,21 @@ const Game = () => {
   function onCreatineEffectOver() {
     if (timerState.currentFoodEffect !== 'steroid' && !gameOver) {
       // Side effects for creatine
-      reverseSnake(snake);
-      setDirection(snake.head!.data.direction);
+      reverseSnake(snakeRef.current);
+      setDirection(snakeRef.current.head!.data.direction, false);
     }
   }
 
   function onSteroidEffectOver() {
     if (!gameOver) {
       if (snakeState.snakeCells.length > 1) {
-        const newSnakeCells = removeCells(snakeState.snakeCells, snake, 3);
-        snakeDispatch({ type: 'STEROID_SIDE_EFFECT', newSnakeCells });
+        const [, removedSnakeCells] = removeCells(
+          snakeState.snakeCells,
+          snakeRef.current,
+          3
+        );
+        snakeRef.current.print();
+        snakeCellsToBeRemoved.current = removedSnakeCells;
       }
     }
   }

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import useSound from 'use-sound';
 import './App.css';
 import { CoolBackground } from './components/CoolBackground/CoolBackground';
+import { WaitForImages } from './components/hoc/WaitForImages';
 import { MainButtons } from './components/MainButtons';
 import { SafariAlert } from './components/SafariAlert';
 import { BOARD_SIZE, SNAKE_SPEED } from './consts';
@@ -147,7 +148,11 @@ function App() {
   );
 
   if (playGame) {
-    component = <Game />;
+    component = (
+      <WaitForImages>
+        <Game />
+      </WaitForImages>
+    );
   } else if (multiplayerSettings?.peer) {
     component = (
       <MultiplayerWrapper

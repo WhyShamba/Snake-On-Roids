@@ -36,10 +36,6 @@ import {
 import { isOutOfBounds } from '../../utils/isOutOfBounds';
 import { Node, SingleLinkedList } from '../../utils/SingleLinkedList';
 import {
-  getSnakeSpeedOnCreatine,
-  getSnakeSpeedOnRoids,
-} from '../../utils/snake/calculateSnakeSpeed';
-import {
   generateDirectionMultiplayer,
   getFoodCell,
   getFoodType,
@@ -83,7 +79,7 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
   // Snake state
   const [timerState, timerDispatch] = useReducer(
     timerReducer,
-    initializeTimerReducerInitialState(gameDuration)
+    initializeTimerReducerInitialState(initialSnakeSpeed, gameDuration)
   );
   const [{ gameOver, ...gameState }, gameDispatch] = useReducer(
     gameReducer,
@@ -105,6 +101,7 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
       new Node(getInitialSnakeCellMultiplayer(board, isGuest))
     )
   );
+  const snakeCellsToBeRemoved = useRef<number[]>(); // Helps with snake reducer state collision (when multiple dispatches are done at once)
   const { direction, setDirection } = useSnakeMovementImproved(
     snakeRef.current.head!.data!.direction,
     snakeState.snakeCells.length
@@ -123,16 +120,9 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
   );
   const showMessage = useRef(true);
 
-  let snakeSpeed = initialSnakeSpeed;
-  if (timerState.currentFoodEffect === 'steroid') {
-    snakeSpeed = getSnakeSpeedOnRoids(snakeSpeed);
-  } else if (timerState.currentFoodEffect === 'creatine') {
-    snakeSpeed = getSnakeSpeedOnCreatine(snakeSpeed);
-  }
-
   useSetInterval(() => {
     if (!gameOver && startGame) onMove();
-  }, snakeSpeed);
+  }, timerState.snakeSpeed);
 
   // Used for handling counting model etc etc
   useEffect(() => {
@@ -173,11 +163,6 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
         gameDispatch({
           type: 'PLAY_AGAIN_REQUEST',
           byMe: false,
-          // Causes warning
-          // notifyPlayer: () =>
-          //   toast({
-          // ......
-          //   }),
         });
       } else {
         switch (data.type) {
@@ -260,11 +245,13 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
     }
   }, [timerState.foodCount, timerState.effectsCount]);
 
-  const snake = snakeRef.current;
-
   const onMove = () => {
-    if (!isOutOfBounds(direction, snake, board)) {
-      const newNode = getNextNodeForDirection(snake.head!, direction, board);
+    if (!isOutOfBounds(direction, snakeRef.current, board)) {
+      const newNode = getNextNodeForDirection(
+        snakeRef.current.head!,
+        direction,
+        board
+      );
 
       // If it's not colliding
       if (
@@ -272,15 +259,22 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
         !snakeState.enemy?.snakeCells?.includes(newNode.data!.value)
       ) {
         // remove tail
-        let newSnakeCells = snakeState.snakeCells.filter(
-          (cellValue) => cellValue !== snake.tail?.data.value
-        );
+        let newSnakeCells = snakeState.snakeCells.filter((cellValue) => {
+          if (cellValue === snakeRef.current.tail?.data.value) return false;
+          if (
+            snakeCellsToBeRemoved.current &&
+            snakeCellsToBeRemoved.current.includes(cellValue)
+          )
+            return false;
+          return true;
+        });
+        snakeCellsToBeRemoved.current = undefined;
 
         // add new head
         newSnakeCells.push(newNode.data.value);
 
         // fix links in snake
-        snake.moveList(newNode);
+        snakeRef.current.moveList(newNode);
 
         const foodConsumed = newNode.data.value === snakeState.foodCell.value;
         if (foodConsumed) {
@@ -313,19 +307,19 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
       snakeState.foodCell.food === 'protein' ||
       snakeState.foodCell.food === 'meat'
     ) {
-      newSnakeCells = growSnake(snake, board, newSnakeCells);
+      newSnakeCells = growSnake(snakeRef.current, board, newSnakeCells);
     } else if (snakeState.foodCell.food === 'creatine') {
-      newSnakeCells = growSnake(snake, board, newSnakeCells);
+      newSnakeCells = growSnake(snakeRef.current, board, newSnakeCells);
 
       // Add the effects
       if (timerState.currentFoodEffect !== 'steroid') {
-        reverseSnake(snake);
+        reverseSnake(snakeRef.current);
 
-        setDirection(snake.head?.data.direction!, false);
+        setDirection(snakeRef.current.head?.data.direction!, false);
       }
     } else if (snakeState.foodCell.food === 'steroid') {
       for (let index = 0; index < 2; index++) {
-        newSnakeCells = growSnake(snake, board, newSnakeCells);
+        newSnakeCells = growSnake(snakeRef.current, board, newSnakeCells);
       }
     }
     foodEaten = snakeState.foodCell.food;
@@ -376,6 +370,8 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
     toast.closeAll();
     // If both players agree to play
 
+    setDirection(generateDirectionMultiplayer(isGuest));
+
     snakeRef.current = new SingleLinkedList(
       new Node(getInitialSnakeCellMultiplayer(board, isGuest))
     );
@@ -383,8 +379,6 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
     gameDispatch({ type: 'PLAY_AGAIN' });
     timerDispatch({ type: 'PLAY_AGAIN', gameCountDown: gameDuration });
     snakeDispatch({ type: 'PLAY_AGAIN', sendInitialSnakePosition });
-
-    setDirection(generateDirectionMultiplayer(isGuest));
 
     closeModal();
 
@@ -429,10 +423,11 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
           board={board}
           foodCell={snakeState.foodCell}
           snakeCells={snakeState.snakeCells}
-          snake={snake}
+          snake={snakeRef.current}
           enemySnakeRef={snakeState.enemy?.snake}
           enemyFoodCell={snakeState.enemy?.foodCell}
           enemyCells={snakeState.enemy?.snakeCells}
+          snakeCellsToBeRemoved={snakeCellsToBeRemoved.current}
         />
       </Flex>
       <Controller
@@ -492,26 +487,24 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
     connection.send('PLAY_AGAIN');
   }
 
-  // function sendTimeExpiredSignal() {
-  //   connection.send({
-  //     type: 'TIME_EXPIRED',
-  //     score: snakeState.snakeCells.length - 1,
-  //   });
-  // }
   // Side effects that can happen
   function onCreatineEffectOver() {
     if (timerState.currentFoodEffect !== 'steroid' && !gameOver) {
       // Side effects for creatine
-      reverseSnake(snake);
-      setDirection(snake.head!.data.direction);
+      reverseSnake(snakeRef.current);
+      setDirection(snakeRef.current.head!.data.direction, false);
     }
   }
 
   function onSteroidEffectOver() {
     if (!gameOver) {
       if (snakeState.snakeCells.length > 1) {
-        const newSnakeCells = removeCells(snakeState.snakeCells, snake, 3);
-        snakeDispatch({ type: 'STEROID_SIDE_EFFECT', newSnakeCells });
+        const [, removedSnakeCells] = removeCells(
+          snakeState.snakeCells,
+          snakeRef.current,
+          3
+        );
+        snakeCellsToBeRemoved.current = removedSnakeCells;
       }
     }
   }

@@ -5,19 +5,11 @@ import React, { useEffect, useState } from 'react';
 import { MultiplayerSettingsType } from '../../App';
 import { MenuModal } from '../../components/MenuModal';
 import { GetReadyModal } from '../../components/Multiplayer/GetReadyModal';
+import { imagesToPrecache } from '../../consts';
 import { useCountdown } from '../../custom-hooks/useCountdown';
 import { GameDataType } from '../../types/types';
 import { cacheImages } from '../../utils/cacheImages';
 import MultiplayerGame from './MultiplayerGame';
-
-const imagesToPrecache = [
-  '/snake/eyes.png',
-  '/snake/tail.png',
-  '/img/avatar.png',
-  '/img/roid.png',
-  '/img/creatine.webp',
-  '/img/protein.webp',
-];
 
 const MultiplayerWrapper: React.FC<
   MultiplayerSettingsType & {

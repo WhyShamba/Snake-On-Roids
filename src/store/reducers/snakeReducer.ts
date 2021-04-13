@@ -23,6 +23,7 @@ export const mainReducer = (
       };
 
     case 'MOVE_SNAKE':
+      console.log('Move snake with new: ', action.newSnakeCells);
       const newState = produce(state, (draft) => {
         draft.score = action.newScore;
         draft.snakeCells = action.newSnakeCells;
@@ -51,11 +52,6 @@ export const mainReducer = (
         ),
       };
 
-    case 'STEROID_SIDE_EFFECT':
-      return {
-        ...state,
-        snakeCells: action.newSnakeCells,
-      };
     case 'GAME_OVER':
       break;
 

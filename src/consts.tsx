@@ -12,3 +12,11 @@ export const CREATINE_EFFECT_DURATION = 20;
 export const BOARD_SIZE = 10 * 10;
 export const BOARD_SIZE_MEDIUM = 12 * 12;
 export const BOARD_SIZE_HIGH = 15 * 15;
+export const imagesToPrecache = [
+  '/snake/eyes.png',
+  '/snake/tail.png',
+  '/img/avatar.png',
+  '/img/roid.png',
+  '/img/creatine.webp',
+  '/img/protein.webp',
+];

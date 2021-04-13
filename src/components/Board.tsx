@@ -16,6 +16,7 @@ interface BoardProps {
     food: FoodType;
   };
   snakeCells: Array<number>;
+  snakeCellsToBeRemoved?: Array<number>;
 }
 
 const Board: React.FC<BoardProps> = ({
@@ -23,6 +24,7 @@ const Board: React.FC<BoardProps> = ({
   snakeRef,
   foodCell,
   snakeCells,
+  snakeCellsToBeRemoved,
 }) => {
   const cellRef = useRef<HTMLDivElement | null>(null);
 
@@ -50,7 +52,10 @@ const Board: React.FC<BoardProps> = ({
             {row.map((cell) => {
               // Let this be standard cell
               let cellType: any = null;
-              if (snakeCells.includes(cell)) {
+              if (
+                snakeCells.includes(cell) &&
+                !snakeCellsToBeRemoved?.includes(cell)
+              ) {
                 if (cell === snakeRef.current.head!.data!.value) {
                   cellType = (
                     <HeadCell

@@ -82,15 +82,13 @@ export type SnakeReducerActionType =
       enemySnake: SnakeType;
       enemyCells: number[];
       enemyFoodCell: FoodCell;
-    }
-  | {
-      type: 'STEROID_SIDE_EFFECT';
-      newSnakeCells: number[];
     };
 
 export type CountReducerType = {
   foodCount: number;
   gameCountDown?: number;
+  snakeSpeed: number;
+  initialSnakeSpeed: number;
   effectsCount: {
     steroid?: number;
     creatine?: number;

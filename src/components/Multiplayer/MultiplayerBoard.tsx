@@ -14,6 +14,7 @@ interface MultiplayerBoardProps {
   enemyFoodCell?: FoodCellType | null;
   snakeCells: Array<number>;
   enemyCells?: Array<number>;
+  snakeCellsToBeRemoved?: Array<number>;
 }
 
 const MultiplayerBoard: React.FC<MultiplayerBoardProps> = ({
@@ -24,6 +25,7 @@ const MultiplayerBoard: React.FC<MultiplayerBoardProps> = ({
   enemyCells,
   enemyFoodCell,
   enemySnakeRef: enemySnake,
+  snakeCellsToBeRemoved,
 }) => {
   const cellRef = useRef<HTMLDivElement | null>(null);
 
@@ -46,7 +48,11 @@ const MultiplayerBoard: React.FC<MultiplayerBoardProps> = ({
             }
 
             let cellType: any = null;
-            if (snakeCells.includes(cell) || enemyCells?.includes(cell)) {
+            if (
+              (snakeCells.includes(cell) &&
+                !snakeCellsToBeRemoved?.includes(cell)) ||
+              enemyCells?.includes(cell)
+            ) {
               if (cell === currentSnake.head!.data!.value) {
                 cellType = (
                   <HeadCell

@@ -72,6 +72,7 @@ export function removeCells(
   howMany: number
 ) {
   let newSnakeCells = [...snakeCells];
+  const removedSnakeCells: number[] = [];
 
   const removeCellsNumber =
     newSnakeCells.length - howMany > 1 ? newSnakeCells.length - howMany : 1;
@@ -80,6 +81,7 @@ export function removeCells(
     newSnakeCells = newSnakeCells.filter(
       (cellVal) => cellVal !== removedTail!.data!.value
     );
+    removedSnakeCells.push(removedTail.data.value);
   }
-  return newSnakeCells;
+  return [newSnakeCells, removedSnakeCells];
 }
