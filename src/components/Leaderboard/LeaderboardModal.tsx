@@ -80,7 +80,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
       isCentered
     >
       <ModalOverlay />
-      <ModalContent color='white' bg='primary.main'>
+      <ModalContent w='90%' color='white' bg='primary.main'>
         <ModalHeader>LEADERBOARD</ModalHeader>
         <ModalCloseButton _focus={{}} _active={{}} />
         <ModalBody

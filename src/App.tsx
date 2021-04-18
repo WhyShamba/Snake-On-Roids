@@ -107,6 +107,22 @@ function App() {
   useEffect(() => {
     // TODO: TEST
     if (isSafari) setIsSafariBrowser(true);
+    // for updating clients where i have not set highest score
+    if (!settings.highestScore)
+      setSettings({
+        ...settings,
+        highestScore: {
+          gameOne: 0,
+          gameTwo: 0,
+          gameThree: 0,
+          gameFour: 0,
+          gameFive: 0,
+          gameSix: 0,
+          gameSeven: 0,
+          gameEight: 0,
+          gameNine: 0,
+        },
+      });
 
     if (playBtnRef.current && !settings.mute) {
       // Play sound on startup
