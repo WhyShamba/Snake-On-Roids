@@ -1,11 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useDisclosure } from '@chakra-ui/react';
+import { useDisclosure, useToast } from '@chakra-ui/react';
 import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useReducer,
   useRef,
+  useState,
 } from 'react';
 import { AvatarBar } from '../components/AvatarBar';
 import Board from '../components/Board';
@@ -21,6 +23,8 @@ import {
   timerReducer,
 } from '../store/reducers/timerReducer';
 import { DIRECTION, FoodType, SnakeReducerActionType } from '../types/types';
+import { createValidUsername } from '../utils/createValidUsername';
+import { createLeaderboard } from '../utils/firebase-operations/createLeaderboard';
 import { generateRandomNum } from '../utils/generateRandomNum';
 import { isOutOfBounds } from '../utils/isOutOfBounds';
 import { Node, SingleLinkedList } from '../utils/SingleLinkedList';
@@ -44,6 +48,12 @@ const Game = () => {
     snakeSpeed: initialSnakeSpeed,
     disableController,
     board,
+    highestScore,
+    user,
+    userLoading,
+    setHighestScore,
+    boardSize,
+    gameType,
   } = useContext(MainContext);
   const [timerState, timerDispatch] = useReducer(
     timerReducer,
@@ -74,6 +84,8 @@ const Game = () => {
     onOpen: openModal,
     onClose: closeModal,
   } = useDisclosure();
+  const [newHighScore, setNewHighScore] = useState(false);
+  const toast = useToast();
 
   useSetInterval(() => {
     if (!gameOver) onMove();
@@ -205,16 +217,43 @@ const Game = () => {
     };
   };
 
+  // Firebase submit highscore
+  const submitHighScore = async (username: string) => {
+    if (user) {
+      const res = await createLeaderboard(user.displayName!, {
+        game: { [gameType]: snakeState.score },
+        name: createValidUsername(username),
+      });
+
+      toast({
+        title: res
+          ? 'Successfully submitted your new high score'
+          : 'There was a problem while submitting your highscore, try at later time!',
+        position: 'top',
+        status: res ? 'success' : 'error',
+        isClosable: true,
+        duration: 2000,
+      });
+    }
+  };
+
   // Game over and play again methods
   function gameOverHandler() {
     // Turn off effects
     timerDispatch({ type: 'GAME_OVER' });
+
+    // Set highest score locally
+    if (snakeState.score > highestScore[gameType]) {
+      setNewHighScore(true);
+      setHighestScore({ [gameType]: snakeState.score });
+    }
 
     openModal();
   }
 
   // Reset the game to initial state
   const playAgain = () => {
+    setNewHighScore(false);
     snakeRef.current = new SingleLinkedList(
       new Node(getInitialSnakeCell(board))
     );
@@ -249,13 +288,24 @@ const Game = () => {
         currentDirection={direction}
         disable={disableController}
       />
-      <GameOverModal
-        isOpen={gameOver}
-        onClose={closeModal}
-        score={snakeState.score}
-        onPlayAgain={playAgain}
-        onMenuClick={togglePlayGame}
-      />
+      {useMemo(
+        () => (
+          <GameOverModal
+            isOpen={gameOver}
+            onClose={closeModal}
+            score={snakeState.score}
+            onPlayAgain={playAgain}
+            onMenuClick={togglePlayGame}
+            highestScore={highestScore[gameType]}
+            user={user}
+            authLoading={userLoading}
+            onSubmit={() => setNewHighScore(false)}
+            newHighScore={newHighScore}
+            submitHighScore={submitHighScore}
+          />
+        ),
+        [gameOver, newHighScore]
+      )}
     </>
   );
 

@@ -154,3 +154,31 @@ export type GameReducerActionType =
       sendPlayAgainSignal?: () => any;
       notifyPlayer?: () => any;
     };
+
+// firebase
+export type LeaderBoardApiType = {
+  name: string;
+  game: Partial<HighScoreType>;
+};
+
+export type LeaderBoardType = {
+  id: string;
+  name: string;
+  game: Partial<HighScoreType>;
+};
+
+// Check gameChooser.ts for more info
+export type GamesCountType =
+  | 'gameOne' // board size 10x10, speed LOW
+  | 'gameTwo' // board size 12x12, speed LOW
+  | 'gameThree' // board size 15x15, speed LOW
+  | 'gameFour' // board size 10x10, speed MEDIUM
+  | 'gameFive' // board size 12x12, speed MEDIUM
+  | 'gameSix' // board size 15x15, speed MEDIUM
+  | 'gameSeven' // board size 10x10, speed HIGH
+  | 'gameEight' // board size 12x12, speed HIGH
+  | 'gameNine'; // board size 15x15, speed HIGH
+
+export type HighScoreType = {
+  [gameType in GamesCountType]: number;
+};

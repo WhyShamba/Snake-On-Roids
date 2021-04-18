@@ -6,7 +6,6 @@ import {
 import { getFoodCell, getFoodType } from '../../utils/snake/initializers';
 import { generateFoodCell } from '../../utils/snake/snakeManipulationMethods';
 
-// TODO: handle set direction and checkup maybe, and enemy set cells
 export const mainReducer = (
   state: SnakeReducerStateType,
   action: SnakeReducerActionType
@@ -23,7 +22,6 @@ export const mainReducer = (
       };
 
     case 'MOVE_SNAKE':
-      console.log('Move snake with new: ', action.newSnakeCells);
       const newState = produce(state, (draft) => {
         draft.score = action.newScore;
         draft.snakeCells = action.newSnakeCells;

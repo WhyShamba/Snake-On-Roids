@@ -1,21 +1,31 @@
-import { Center } from '@chakra-ui/react';
+import { Button, Center, useDisclosure } from '@chakra-ui/react';
 import Peer from 'peerjs';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import useSound from 'use-sound';
 import './App.css';
 import { CoolBackground } from './components/CoolBackground/CoolBackground';
 import { WaitForImages } from './components/hoc/WaitForImages';
+import { LeaderboardModal } from './components/Leaderboard/LeaderboardModal';
 import { MainButtons } from './components/MainButtons';
 import { SafariAlert } from './components/SafariAlert';
+import { UnsubmittedModal } from './components/UnsubmittedModal';
 import { BOARD_SIZE, SNAKE_SPEED } from './consts';
 import Game from './containers/Game';
 import { Menu } from './containers/Menu';
 import MultiplayerWrapper from './containers/Multiplayer/MultiplayerWrapper';
-import { MainContext } from './context';
+import { ContextType, MainContext } from './context';
+import firebase from './firebase';
 import { createBoard } from './utils/createBoard';
+import { createValidUsername } from './utils/createValidUsername';
+import { createLeaderboard } from './utils/firebase-operations/createLeaderboard';
+import { updateLeaderboard } from './utils/firebase-operations/updateLeaderboard';
+import { gameChooser } from './utils/gameChooser';
 import { generateId } from './utils/generateId';
 import { isSafari } from './utils/isSafari';
+import { updateInitialHighScore } from './utils/updateInitialHighScore';
 import { updateObj } from './utils/updateObj';
+import { userExists } from './utils/userExists';
 
 export type SettingsType = {
   boardSize: number;
@@ -23,6 +33,7 @@ export type SettingsType = {
   musicVolume: number;
   disableController: boolean;
   mute: boolean;
+  highestScore: ContextType['highestScore'];
 };
 
 export type MultiplayerSettingsType = {
@@ -50,6 +61,17 @@ function App() {
           musicVolume: 1,
           disableController: false,
           mute: false,
+          highestScore: {
+            gameOne: 0,
+            gameTwo: 0,
+            gameThree: 0,
+            gameFour: 0,
+            gameFive: 0,
+            gameSix: 0,
+            gameSeven: 0,
+            gameEight: 0,
+            gameNine: 0,
+          },
         }
   );
   // Instead of adding react-router
@@ -74,11 +96,19 @@ function App() {
       board: createBoard(BOARD_SIZE),
     },
   });
+  const {
+    isOpen: leaderboardOpen,
+    onOpen: onOpenLeaderboard,
+    onClose: onCloseLeaderboard,
+  } = useDisclosure();
+  const [user, loading] = useAuthState(firebase.auth());
+  // Modal showing only once when user visits website, if he has unsubmitted score
+  const [unsubmittedModal, setUnsubmittedModal] = useState<JSX.Element>();
 
   /* eslint-disable */
   useEffect(() => {
-    // TODO: test, if not working add detect-browser library
-    if (isSafari()) setIsSafariBrowser(true);
+    // TODO: TEST
+    if (isSafari) setIsSafariBrowser(true);
 
     if (playBtnRef.current && !settings.mute) {
       // Play sound on startup
@@ -92,6 +122,38 @@ function App() {
       };
     }
   }, []);
+
+  // useEffect for checking if right high score is set
+  useEffect(() => {
+    if (user) {
+      const checkHighscore = async () => {
+        const userDb = await userExists(user.displayName!);
+
+        // if user registered previously in database
+        const [toUpdate, isChanged] = updateInitialHighScore(
+          settings.highestScore,
+          userDb ? userDb.highScore : null
+        );
+
+        // update or create new leaderboard
+        if (isChanged) {
+          setUnsubmittedModal(
+            <UnsubmittedModal
+              toUpdate={toUpdate}
+              displayName={user.displayName!}
+            />
+          );
+          setSettings({
+            ...settings,
+            highestScore: { ...settings.highestScore, ...toUpdate },
+          });
+        }
+        return;
+      };
+
+      checkHighscore();
+    }
+  }, [user]);
 
   useEffect(() => {
     const saveSettings = () => {
@@ -125,7 +187,7 @@ function App() {
       settings: _settings,
     });
 
-  const handleMultiplayer = (connectionPeerId?: string) => {
+  const handleMultiplayer = useCallback((connectionPeerId?: string) => {
     const peer = new Peer(generateId());
 
     peer.on('open', function (id) {
@@ -138,12 +200,14 @@ function App() {
           typeof connectionPeerId === 'string' ? connectionPeerId : undefined,
       });
     });
-  };
+  }, []);
 
   let component = (
     <Menu
-      onPlayGame={() => setPlayGame(true)}
+      onPlayGame={useCallback(() => setPlayGame(true), [])}
       handleMultiplayer={handleMultiplayer}
+      openLeaderboard={useCallback(onOpenLeaderboard, [])}
+      user={user}
     />
   );
 
@@ -172,9 +236,17 @@ function App() {
 
   return (
     <>
+      {unsubmittedModal}
       {isSafariBrowser && (
         <SafariAlert onClose={() => setIsSafariBrowser(false)} />
       )}
+      <LeaderboardModal
+        isOpen={leaderboardOpen}
+        onClose={onCloseLeaderboard}
+        currentUserId={
+          user?.displayName ? createValidUsername(user?.displayName) : ''
+        } // i set the displayName as an in
+      />
       <Center minH='100vh' bg='primary.main' color='white' pos='relative'>
         <CoolBackground />
         <MainButtons
@@ -182,9 +254,12 @@ function App() {
           handleSound={handleSound}
           isPlaying={isPlaying}
           playGame={playGame}
+          onLeaderboardOpen={onOpenLeaderboard}
         />
         <MainContext.Provider
           value={{
+            user,
+            userLoading: loading,
             boardSize: settings.boardSize,
             musicVolume: settings.musicVolume,
             snakeSpeed: settings.snakeSpeed,
@@ -192,6 +267,13 @@ function App() {
             mute: settings.mute,
             playGame,
             board: createBoard(settings.boardSize),
+            highestScore: settings.highestScore,
+            gameType: gameChooser(settings.boardSize, settings.snakeSpeed),
+            setHighestScore: (highestScore) =>
+              setSettings({
+                ...settings,
+                highestScore: { ...settings.highestScore, ...highestScore },
+              }),
             setBoardSize: (boardSize) =>
               setSettings({ ...settings, boardSize }),
             setMusicVolume: (musicVolume) =>

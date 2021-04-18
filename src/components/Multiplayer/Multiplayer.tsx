@@ -184,29 +184,38 @@ export const Multiplayer: React.FC<MultiplayerProps> = ({
             </SettingsButton>
           </TabPanel>
           <TabPanel h='464px' p={{ base: 0, lg: 4 }} pt={7}>
-            <FormControl>
-              <FormLabel>Invitation Key</FormLabel>
-              <Input
-                type='text'
-                ref={inputRef}
-                autoComplete='off'
-                textTransform='uppercase'
-                maxLength={5}
-              />
-            </FormControl>
-            <SettingsButton
-              w='100%'
-              mx='auto'
-              display='block'
-              mt={8}
-              onClick={() =>
-                handleMultiplayer(
-                  (inputRef.current.value as string).toUpperCase()
-                )
-              }
-            >
-              Join
-            </SettingsButton>
+            <form>
+              <FormControl>
+                <FormLabel>Invitation Key</FormLabel>
+                <Input
+                  type='text'
+                  ref={inputRef}
+                  autoComplete='off'
+                  textTransform='uppercase'
+                  maxLength={5}
+                  isRequired
+                />
+              </FormControl>
+              <SettingsButton
+                w='100%'
+                mx='auto'
+                display='block'
+                mt={8}
+                type='submit'
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (
+                    inputRef.current?.value &&
+                    inputRef.current.value.length === 5
+                  )
+                    handleMultiplayer(
+                      (inputRef.current.value as string).toUpperCase()
+                    );
+                }}
+              >
+                Join
+              </SettingsButton>
+            </form>
           </TabPanel>
         </TabPanels>
       </Tabs>

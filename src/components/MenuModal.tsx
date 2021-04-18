@@ -13,6 +13,7 @@ interface MenuModalProps {
   isOpen: boolean;
   headerText: string;
   children: JSX.Element | JSX.Element[];
+  size?: '6xl' | 'lg';
 }
 
 export const MenuModal: React.FC<MenuModalProps> = ({
@@ -20,11 +21,12 @@ export const MenuModal: React.FC<MenuModalProps> = ({
   onClose,
   headerText,
   children,
+  size = '6xl',
 }) => {
   return (
     <Modal
       onClose={onClose ? onClose : () => {}}
-      size='6xl'
+      size={size}
       isOpen={isOpen}
       scrollBehavior='inside'
       returnFocusOnClose={false}
