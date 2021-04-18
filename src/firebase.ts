@@ -15,6 +15,7 @@ export const appConfig = {
 
 if (!firebase.apps.length) {
   firebase.initializeApp(appConfig);
+  firebase.analytics();
 } else {
   firebase.app(); // if already initialized, use that one
 }
