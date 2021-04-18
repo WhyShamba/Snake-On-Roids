@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from 'react';
-import { BOARD_SIZE, PER_PAGE, SNAKE_SPEED } from '../consts';
+import { PER_PAGE } from '../consts';
 import firebase from '../firebase';
 import { GamesCountType, LeaderBoardType } from '../types/types';
 import { gameChooser } from '../utils/gameChooser';

@@ -1,4 +1,4 @@
-import { Button, Center, useDisclosure } from '@chakra-ui/react';
+import { Center, useDisclosure } from '@chakra-ui/react';
 import Peer from 'peerjs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -18,8 +18,6 @@ import { ContextType, MainContext } from './context';
 import firebase from './firebase';
 import { createBoard } from './utils/createBoard';
 import { createValidUsername } from './utils/createValidUsername';
-import { createLeaderboard } from './utils/firebase-operations/createLeaderboard';
-import { updateLeaderboard } from './utils/firebase-operations/updateLeaderboard';
 import { gameChooser } from './utils/gameChooser';
 import { generateId } from './utils/generateId';
 import { isSafari } from './utils/isSafari';

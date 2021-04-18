@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import {
   FormControl,
   FormHelperText,
@@ -9,7 +10,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { HighScoreType } from '../types/types';
 import { createValidUsername } from '../utils/createValidUsername';
 import { createLeaderboard } from '../utils/firebase-operations/createLeaderboard';
-import { updateLeaderboard } from '../utils/firebase-operations/updateLeaderboard';
 import { MenuModal } from './MenuModal';
 import { SettingsButton } from './Settings/SettingsButton';
 

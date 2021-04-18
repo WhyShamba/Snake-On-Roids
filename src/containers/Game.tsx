@@ -52,7 +52,6 @@ const Game = () => {
     user,
     userLoading,
     setHighestScore,
-    boardSize,
     gameType,
   } = useContext(MainContext);
   const [timerState, timerDispatch] = useReducer(
