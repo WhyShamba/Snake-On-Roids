@@ -1,10 +1,4 @@
-// Safari 3.0+ "[object HTMLElementConstructor]"
-export const isSafari = () =>
-  /constructor/i.test(window.HTMLElement as any) ||
-  (function (p) {
-    return p.toString() === '[object SafariRemoteNotification]';
-  })(
-    (!window as any['safari']) ||
-      (typeof (window as any).safari !== 'undefined' &&
-        (window as any).safari.pushNotification)
-  );
+export const isSafari =
+  navigator.vendor.match(/apple/i) &&
+  !navigator.userAgent.match(/crios/i) &&
+  !navigator.userAgent.match(/fxios/i);

@@ -20,3 +20,4 @@ export const imagesToPrecache = [
   '/img/creatine.webp',
   '/img/protein.webp',
 ];
+export const PER_PAGE = 6;

@@ -8,6 +8,7 @@ interface MainButtonsProps {
   btnRef: any;
   isPlaying: boolean;
   playGame: boolean;
+  onLeaderboardOpen: any;
 }
 
 export const MainButtons: React.FC<MainButtonsProps> = ({
@@ -15,6 +16,7 @@ export const MainButtons: React.FC<MainButtonsProps> = ({
   btnRef,
   handleSound,
   playGame,
+  onLeaderboardOpen,
 }) => {
   return (
     <HStack
@@ -49,11 +51,11 @@ export const MainButtons: React.FC<MainButtonsProps> = ({
         variant='ghost'
         size='lg'
         fontSize={{ lg: '40px', base: '33px' }}
-        disabled
         _hover={{
           bg: 'none',
           transform: 'scale(1.05)',
         }}
+        onClick={onLeaderboardOpen}
       />
     </HStack>
   );

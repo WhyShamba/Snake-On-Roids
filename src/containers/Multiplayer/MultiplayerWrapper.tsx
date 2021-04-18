@@ -57,12 +57,15 @@ const MultiplayerWrapper: React.FC<
     } else {
       // If user presses join game
       const conn = peer!.connect(connectionPeerId!);
+      let stopTimeout = false;
 
       cacheImages(imagesToPrecache).then(() => {
         conn.on('open', () => {
           // Wait for settings. The creator might need to wait longer test
           conn.on('data', (data: GameDataType) => {
+            // signal to join the game
             if (typeof data === 'object' && data.type === 'SET_SETTINGS') {
+              stopTimeout = true;
               setMultiplayerBoardSettings(data.boardSettings);
               setConnection(conn);
               activateInitialGetReadyModal();
@@ -70,6 +73,16 @@ const MultiplayerWrapper: React.FC<
           });
         });
       });
+
+      // IF user is joining, after 5 sec if not successfully joined -> disconnect him
+      const timeout = setTimeout(() => {
+        console.log('TIMEOUT', stopTimeout);
+        if (!stopTimeout) cancelGame();
+      }, 5000);
+
+      return () => {
+        clearTimeout(timeout);
+      };
     }
   }, []);
 
@@ -132,7 +145,6 @@ const MultiplayerWrapper: React.FC<
       </Text>
     </MenuModal>
   ) : (
-    // TODO: add suspense or something so this does't load infinetely
     <Text>Joining...</Text>
   );
 };

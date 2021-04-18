@@ -9,16 +9,20 @@ import {
 } from '@chakra-ui/react';
 import React from 'react';
 import { Instructions } from '../components/Instructions/Instructions';
+import { LogoutComponent } from '../components/LogoutComponent';
 import { Multiplayer } from '../components/Multiplayer/Multiplayer';
 import { Settings } from '../components/Settings/Settings';
+import firebase from '../firebase';
 
 interface MenuProps {
   onPlayGame: () => any;
   handleMultiplayer: () => any;
+  openLeaderboard: () => any;
+  user: firebase.User | null | undefined;
 }
 
 export const Menu: React.FC<MenuProps> = React.memo(
-  ({ onPlayGame, handleMultiplayer }) => {
+  ({ onPlayGame, handleMultiplayer, user, openLeaderboard }) => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const {
       isOpen: isOpenSettings,
@@ -53,6 +57,7 @@ export const Menu: React.FC<MenuProps> = React.memo(
         zIndex={1}
         w='90%'
         maxW='450px'
+        pos='relative'
       >
         <Heading textAlign='center' mb={14}>
           Snake On Roids
@@ -71,10 +76,10 @@ export const Menu: React.FC<MenuProps> = React.memo(
             Settings
           </Button>
           <Button {...commonButtonStyle} onClick={openMultiplayer}>
-            Multiplayer (BETA)
+            Multiplayer
           </Button>
-          <Button w='full' bg='#521f1f' disabled _hover={{ bg: '#521f1f' }}>
-            Leaderboard (SOON)
+          <Button {...commonButtonStyle} onClick={openLeaderboard}>
+            Leaderboard
           </Button>
         </VStack>
         <Instructions isOpen={isOpen} onClose={onClose} />
@@ -84,6 +89,12 @@ export const Menu: React.FC<MenuProps> = React.memo(
           onClose={closeMultiplayer}
           handleMultiplayer={handleMultiplayer}
         />
+        {user ? (
+          <LogoutComponent
+            displayName={user.displayName!}
+            logout={() => firebase.auth().signOut()}
+          />
+        ) : null}
       </Flex>
     );
   }

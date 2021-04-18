@@ -3,7 +3,7 @@ import React from 'react';
 
 interface SettingsButtonProps extends ButtonProps {
   children: string;
-  onClick?: any;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
   isActive?: boolean;
 }
 
