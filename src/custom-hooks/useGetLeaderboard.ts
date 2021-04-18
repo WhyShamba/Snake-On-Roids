@@ -35,7 +35,6 @@ export const useGetLeaderboard = (boardSize: number, snakeSpeed: number) => {
   );
 
   useEffect(() => {
-    console.log('In use effect: ', boardSize, snakeSpeed);
     const newGameType = gameChooser(boardSize, snakeSpeed);
     setGameType(newGameType);
     const fetchLeaderBoard = async () => {
@@ -58,7 +57,6 @@ export const useGetLeaderboard = (boardSize: number, snakeSpeed: number) => {
     fetchLeaderBoard();
   }, [boardSize, snakeSpeed]);
 
-  console.log('The data', dataState, loadingMore);
   useEffect(() => {
     const fetchInitialData = async () => {
       const limitPlusOne = PER_PAGE + 1;
@@ -67,8 +65,6 @@ export const useGetLeaderboard = (boardSize: number, snakeSpeed: number) => {
         .orderBy(`game.${gameType}`, 'desc')
         .where(`game.${gameType}`, '!=', null)
         .get();
-
-      console.log('first data: ', data.docs);
 
       //   -2 because im fetching +1 for pagination
       lastDoc.current = data.docs[data.docs.length - 2];

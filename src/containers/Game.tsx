@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useReducer,
   useRef,
   useState,
@@ -287,20 +288,24 @@ const Game = () => {
         currentDirection={direction}
         disable={disableController}
       />
-      {/* // TODO: Add memo here only when gameOver changes i think to re-render */}
-      <GameOverModal
-        isOpen={gameOver}
-        onClose={closeModal}
-        score={snakeState.score}
-        onPlayAgain={playAgain}
-        onMenuClick={togglePlayGame}
-        highestScore={highestScore[gameType]}
-        user={user}
-        authLoading={userLoading}
-        onSubmit={() => setNewHighScore(false)}
-        newHighScore={newHighScore}
-        submitHighScore={submitHighScore}
-      />
+      {useMemo(
+        () => (
+          <GameOverModal
+            isOpen={gameOver}
+            onClose={closeModal}
+            score={snakeState.score}
+            onPlayAgain={playAgain}
+            onMenuClick={togglePlayGame}
+            highestScore={highestScore[gameType]}
+            user={user}
+            authLoading={userLoading}
+            onSubmit={() => setNewHighScore(false)}
+            newHighScore={newHighScore}
+            submitHighScore={submitHighScore}
+          />
+        ),
+        [gameOver, newHighScore]
+      )}
     </>
   );
 
