@@ -24,6 +24,7 @@ import { isSafari } from './utils/isSafari';
 import { updateInitialHighScore } from './utils/updateInitialHighScore';
 import { updateObj } from './utils/updateObj';
 import { userExists } from './utils/userExists';
+import '@fontsource/aldrich';
 
 export type SettingsType = {
   boardSize: number;

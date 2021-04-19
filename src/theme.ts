@@ -8,6 +8,10 @@ const theme = extendTheme({
       borderColor: '#ffffff0a',
     },
   },
+  fonts: {
+    body: 'Aldrich',
+    heading: 'Aldrich',
+  },
 });
 
 export default theme;
