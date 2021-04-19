@@ -51,6 +51,8 @@ export const MainButtons: React.FC<MainButtonsProps> = ({
         variant='ghost'
         size='lg'
         fontSize={{ lg: '40px', base: '33px' }}
+        _focus={{}}
+        _active={{}}
         _hover={{
           bg: 'none',
           transform: 'scale(1.05)',

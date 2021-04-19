@@ -17,6 +17,7 @@ interface LeaderboardPanelProps {
   hasMore?: boolean;
   currentUserId: string;
   gameType: GamesCountType;
+  snakeSpeed: number;
 }
 
 const tabs = ['Speed: LOW', 'Speed: MEDIUM', 'Speed: HIGH'];
@@ -29,6 +30,7 @@ export const LeaderboardPanel: React.FC<LeaderboardPanelProps> = ({
   currentUserId,
   setSnakeSpeed,
   gameType,
+  snakeSpeed,
 }) => {
   const changeIndex = (index: number) => {
     switch (index) {
@@ -44,6 +46,12 @@ export const LeaderboardPanel: React.FC<LeaderboardPanelProps> = ({
     }
   };
 
+  let defaultIndex = 0;
+  if (snakeSpeed === SNAKE_SPEED_MEDIUM) {
+    defaultIndex = 1;
+  } else if (snakeSpeed === SNAKE_SPEED_HIGH) {
+    defaultIndex = 2;
+  }
   return (
     <Tabs
       colorScheme='red'
@@ -51,6 +59,7 @@ export const LeaderboardPanel: React.FC<LeaderboardPanelProps> = ({
       isLazy
       orientation='vertical'
       onChange={changeIndex}
+      defaultIndex={defaultIndex}
     >
       <TabList>
         {tabs.map((tab) => (

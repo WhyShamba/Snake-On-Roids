@@ -71,6 +71,12 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
     }
   };
 
+  let defaultIndex = 0;
+  if (boardSize === BOARD_SIZE_MEDIUM) {
+    defaultIndex = 1;
+  } else if (boardSize === BOARD_SIZE_HIGH) {
+    defaultIndex = 2;
+  }
   return (
     <Modal
       onClose={onClose}
@@ -106,7 +112,13 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
             }
           `}
         >
-          <Tabs colorScheme='red' isFitted isLazy onChange={changeIndex}>
+          <Tabs
+            colorScheme='red'
+            isFitted
+            isLazy
+            onChange={changeIndex}
+            defaultIndex={defaultIndex}
+          >
             <TabList>
               {tabs.map((tab) => (
                 <Tab
@@ -130,6 +142,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                     setSnakeSpeed={(val) => setSnakeSpeed(val)}
                     gameType={gameType}
                     loading={isLoading}
+                    snakeSpeed={snakeSpeed}
                   />
                 </TabPanel>
               ))}
